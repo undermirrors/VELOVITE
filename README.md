@@ -1,6 +1,7 @@
 # Project VELOVITE
+
 ### Objectif du projet :
- 
+
 - Déterminer la probabilité d'obtenir un velo'v a une station à un moment donné, en fonction des habitudes de flux dans la semaine (ou du mois), la météo, etc.
 - Map interactive qui affiche toutes les stations TCL et donne à chacune un pourcentage d'accessibilité.
 
@@ -12,15 +13,21 @@
 ### Outils :
 
 - Git
-- PostGreSQL
-- Rust
-    - diesel     (pour faire des requêtes SQL avec Rust)
-    - warp      (pour faire des api dans le projet)
-    - Serde     (pour le parsing)
-    - reqwest (faire des requêtes sur les api)
-- Vue/React     (pour le frontend)
 - Notion
 - Github
+
+Backend :
+
+- PostGreSQL
+- Rust
+  - diesel (pour faire des requêtes SQL avec Rust)
+  - warp (pour faire des api dans le projet)
+  - Serde (pour le parsing)
+  - reqwest (faire des requêtes sur les api)
+
+Frontend :
+
+- Framework : Svelte
 
 ### Développeurs du Projets
 
@@ -31,8 +38,8 @@
 - Louka PESIC : En charge du Front-End dans sa généralité.
 
 - Thibaut LARACINE : Chef de projet.
-En charge de la base de données et de ses interactions.
+  En charge de la base de données et de ses interactions.
 
-- Léa MICHEL : En charge de la map interactive. 
+- Léa MICHEL : En charge de la map interactive.
 
-Le scrum master est lui même agile, et sera élu à tour de rôle en fonction des sprints 
+Le scrum master est lui même agile, et sera élu à tour de rôle en fonction des sprints

@@ -1,5 +1,6 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 // for information about these interfaces
+
 declare global {
 	namespace App {
 		// interface Error {}
@@ -8,6 +9,10 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+}
+
+declare module '*.svelte' {
+    export { SvelteComponentDev as default } from 'svelte/internal';
 }
 
 export {};

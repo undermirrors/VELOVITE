@@ -8,7 +8,7 @@ pub struct Forecasts {
     pub available: i32,
 }
 
-#[derive(Queryable, Selectable)]
+#[derive(Queryable, Selectable, Debug)]
 #[diesel(table_name = crate::schema::stations)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Stations {

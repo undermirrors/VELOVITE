@@ -1,5 +1,6 @@
 mod schema;
 mod models;
+mod populate;
 
 use axum::routing::get;
 use axum::Router;

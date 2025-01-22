@@ -1,14 +1,26 @@
-use reqwest::Url;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 use serde_json::Value;
+use crate::models::Stations;
 
 const URL: &str = "https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:pvo_patrimoine_voirie.pvostationvelov&outputFormat=application/json&SRSNAME=EPSG:4171&sortBy=gid";
 
-pub async fn populate(){
+pub async fn populate() -> Vec<Stations> {
     let response = reqwest::get(URL).await.unwrap().text().await.unwrap();
-    let stations: StationsData = serde_json::from_str(&response).unwrap();
-    println!("{:?}", stations);
+    let raw_stations: StationsData = serde_json::from_str(&response).unwrap();
+    // convert the stations raw data into Stations struct
+    let stations: Vec<Stations> = raw_stations.features.iter().map(|station| {
+        Stations {
+            id: station.properties.idstation,
+            name: station.properties.nom.clone(),
+            latitude: station.geometry.coordinates[1],
+            longitude: station.geometry.coordinates[0],
+            adress: station.properties.adresse1.clone(),
+            area: station.properties.commune.clone(),
+            capacity: station.properties.nbbornettes,
+        }
+    }).collect();
+    stations
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -49,13 +61,13 @@ pub struct Geometry {
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Properties {
-    pub idstation: i64,
+    pub idstation: i32,
     pub nom: String,
     pub adresse1: String,
     pub adresse2: Option<String>,
     pub commune: String,
     pub numdansarrondissement: Option<i64>,
-    pub nbbornettes: i64,
+    pub nbbornettes: i32,
     pub stationbonus: Value,
     pub pole: Option<String>,
     pub ouverte: bool,

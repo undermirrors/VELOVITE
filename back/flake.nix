@@ -43,6 +43,7 @@
               })
               openssl
               pkg-config
+              postgresql
             ];
 
             LD_LIBRARY_PATH = lib.makeLibraryPath [];

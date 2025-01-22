@@ -1,16 +1,16 @@
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 use serde_json::Value;
-use crate::models::Stations;
+use crate::models::Station;
 
 const URL: &str = "https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:pvo_patrimoine_voirie.pvostationvelov&outputFormat=application/json&SRSNAME=EPSG:4171&sortBy=gid";
 
-pub async fn populate() -> Vec<Stations> {
+pub async fn populate() -> Vec<Station> {
     let response = reqwest::get(URL).await.unwrap().text().await.unwrap();
     let raw_stations: StationsData = serde_json::from_str(&response).unwrap();
     // convert the stations raw data into Stations struct
-    let stations: Vec<Stations> = raw_stations.features.iter().map(|station| {
-        Stations {
+    let stations: Vec<Station> = raw_stations.features.iter().map(|station| {
+        Station {
             id: station.properties.idstation,
             name: station.properties.nom.clone(),
             latitude: station.geometry.coordinates[1],

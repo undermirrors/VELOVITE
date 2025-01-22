@@ -11,4 +11,4 @@ COPY . .
 RUN cargo build --release
 
 # Run the compiled binary
-CMD ["./target/release/myapp"]
+CMD ["./target/release/velovite-back"]

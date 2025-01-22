@@ -5,5 +5,7 @@ edition = "2021"
 
 [dependencies]
 diesel = { version = "2.2.6", features = ["postgres"] }
-postgres = "0.19.9"
-
+axum = "0.7.9"
+tracing = "0.1"
+tracing-subscriber = "0.3"
+tokio = { version = "1.42.0", features = ["full"] }

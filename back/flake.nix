@@ -35,12 +35,14 @@
       in {
         devShells.default = with pkgs;
           mkShell {
-            nativeBuildInputs = [];
+            nativeBuildInputs = with pkgs; [];
 
             buildInputs = [
               (rust-bin.stable.latest.default.override {
                 extensions = ["rust-analyzer" "rust-src" "rustfmt"];
               })
+              openssl
+              pkg-config
             ];
 
             LD_LIBRARY_PATH = lib.makeLibraryPath [];

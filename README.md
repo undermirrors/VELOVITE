@@ -21,7 +21,7 @@ Backend :
 - PostGreSQL
 - Rust
   - diesel (pour faire des requêtes SQL avec Rust)
-  - warp (pour faire des api dans le projet)
+  - axum (pour faire des api dans le projet)
   - Serde (pour le parsing)
   - reqwest (faire des requêtes sur les api)
 
@@ -43,3 +43,34 @@ Frontend :
 - Léa MICHEL : En charge de la map interactive.
 
 Le scrum master est lui même agile, et sera élu à tour de rôle en fonction des sprints
+
+### lien des API :
+  https://data.grandlyon.com/portail/en/jeux-de-donnees/stations-velo-v-metropole-lyon/api
+  
+  https://data.grandlyon.com/portail/en/jeux-de-donnees/stations-velo-v-metropole-lyon-disponibilites-temps-reel/api
+  
+  https://open-meteo.com/
+  
+### Schéma de la base de données
+
+Nécessaire pour stocker les informations que nous créons et utilisons.
+
+```mermaid
+classDiagram
+  direction LR
+  class VelovStation {
+    idstation$
+    nom
+    coord
+    adresse
+    commune
+    nb_bornette
+  }
+  class Prevision {
+    idstation timestamp$
+    max_capacite
+    disponible
+  }
+
+  VelovStation -- Prevision : 1.N
+```

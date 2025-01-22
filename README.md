@@ -74,3 +74,12 @@ classDiagram
 
   VelovStation -- Prevision : 1.N
 ```
+
+### How to use
+
+To run the project in production mode :
+
+```bash
+docker compose build
+docker compose up -d
+```

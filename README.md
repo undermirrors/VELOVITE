@@ -1,5 +1,7 @@
 # Project VELOVITE
 
+![Project VELOVITE](front/static/dessin.svg)
+
 ### Objectif du projet :
 
 - Déterminer la probabilité d'obtenir un velo'v a une station à un moment donné, en fonction des habitudes de flux dans la semaine (ou du mois), la météo, etc.

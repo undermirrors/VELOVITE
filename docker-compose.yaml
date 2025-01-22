@@ -12,6 +12,33 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    networks:
+      - velovite_network
+
+  front:
+    build: ./front
+    container_name: front
+    ports:
+      - "5000:5000"
+    depends_on:
+      - back
+    networks:
+      - velovite_network
+
+  back:
+    build: ./back
+    container_name: back
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    environment:
+      - DATABASE_URL=postgresql://username:password@db:5432/velovite
+    networks:
+      - velovite_network
 
 volumes:
   postgres_data:
+
+networks:
+  velovite_network:

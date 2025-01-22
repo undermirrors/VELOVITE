@@ -1696,6 +1696,7 @@ dependencies = [
  "chrono",
  "diesel",
  "diesel_migrations",
+ "lazy_static",
  "reqwest",
  "serde",
  "serde_derive",

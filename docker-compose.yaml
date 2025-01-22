@@ -19,7 +19,7 @@ services:
     build: ./front
     container_name: front
     ports:
-      - "5000:5000"
+      - "4173:4173"
     depends_on:
       - back
     networks:

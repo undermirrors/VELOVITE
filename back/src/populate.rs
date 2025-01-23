@@ -1,3 +1,4 @@
+use diesel::prelude::*;
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
 use serde_json::Value;
@@ -5,7 +6,7 @@ use crate::models::Station;
 
 const URL: &str = "https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:pvo_patrimoine_voirie.pvostationvelov&outputFormat=application/json&SRSNAME=EPSG:4171&sortBy=gid";
 
-pub async fn populate() -> Vec<Station> {
+pub async fn populate() {
     let response = reqwest::get(URL).await.unwrap().text().await.unwrap();
     let raw_stations: StationsData = serde_json::from_str(&response).unwrap();
     // convert the stations raw data into Stations struct
@@ -20,7 +21,21 @@ pub async fn populate() -> Vec<Station> {
             capacity: station.properties.nbbornettes,
         }
     }).collect();
-    stations
+    // insert the stations into the database
+    let database_url = std::env::var("DATABASE_URL").expect("Database URL must be set");
+    let connection = &mut diesel::pg::PgConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url));
+
+    // delete all stations first
+    diesel::delete(crate::schema::stations::table)
+        .execute(connection)
+        .expect("Error deleting stations");
+
+    // insert the new stations
+    diesel::insert_into(crate::schema::stations::table)
+        .values(&stations)
+        .execute(connection)
+        .expect("Error inserting stations");
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

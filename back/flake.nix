@@ -39,11 +39,12 @@
 
             buildInputs = [
               (rust-bin.stable.latest.default.override {
-                extensions = ["rust-analyzer" "rust-src" "rustfmt"];
+                extensions = ["rust-analyzer" "rust-src" "rustfmt" "clippy"];
               })
               openssl
               pkg-config
               postgresql
+              lldb
             ];
 
             LD_LIBRARY_PATH = lib.makeLibraryPath [];

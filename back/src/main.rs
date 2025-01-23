@@ -5,6 +5,7 @@ mod models;
 mod populate;
 mod schema;
 
+use tower_http::cors::CorsLayer;
 use api::get_detailed_stations;
 use args::Args;
 use axum::routing::get;
@@ -40,7 +41,8 @@ async fn main() {
         .route("/detailed_stations", get(get_detailed_stations))
         .route("/mock/detailed_stations", get(get_detailed_stations_mock()))
         .route("/station/:id", get(get_detailed_station))
-        .with_state(connection);
+        .with_state(connection)
+        .layer(CorsLayer::permissive());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     tracing::info!("API Server is listening on port 8000");

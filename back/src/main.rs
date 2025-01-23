@@ -29,12 +29,6 @@ async fn main() {
 
     let connection = Arc::new(Mutex::new(establish_connection()));
 
-    connection
-        .lock()
-        .unwrap()
-        .run_pending_migrations(MIGRATIONS)
-        .expect("Error applying pending migrations");
-
     if args.populate {
         populate().await;
     }
@@ -57,6 +51,12 @@ pub fn establish_connection() -> PgConnection {
     dotenvy::dotenv().unwrap();
 
     let database_url = env::var("DATABASE_URL").expect("DATABASE_URL must be set");
-    PgConnection::establish(&database_url)
-        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url))
+    let mut connection = PgConnection::establish(&database_url)
+        .unwrap_or_else(|_| panic!("Error connecting to {}", database_url));
+
+    connection
+        .run_pending_migrations(MIGRATIONS)
+        .expect("Error applying pending migrations");
+
+    connection
 }

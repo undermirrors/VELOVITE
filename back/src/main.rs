@@ -1,15 +1,17 @@
 mod api;
+mod args;
 mod mock;
 mod models;
 mod populate;
 mod schema;
 
 use api::get_stations;
+use args::Args;
 use axum::routing::get;
 use axum::Router;
+use clap::Parser;
 
 use crate::mock::get_stations_mock;
-use crate::models::Station;
 use crate::populate::populate;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
@@ -21,7 +23,7 @@ pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
-    println!("Hello, world!");
+    let args = Args::parse();
 
     let connection = &mut establish_connection();
 
@@ -29,18 +31,10 @@ async fn main() {
         .run_pending_migrations(MIGRATIONS)
         .expect("Error applying pending migrations");
 
-    populate().await;
-
-    use self::schema::station::dsl::*;
-    let results = station
-        .select(Station::as_select())
-        .load(connection)
-        .expect("Error loading posts");
-
-    for s in results {
-        println!("{:?}", s);
+    if args.populate {
+        populate().await;
     }
-    println!("Hello, world! bis");
+
     let app = Router::new()
         .route("/", get(|| async { "Hello, world!" }))
         .route("/stations", get(get_stations(connection)))

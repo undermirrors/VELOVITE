@@ -9,30 +9,38 @@ use std::sync::{Arc, Mutex};
 
 pub async fn get_detailed_stations(
     State(connection): State<Arc<Mutex<PgConnection>>>,
-) -> Json<Vec<DetailedStation>> {
+) -> impl IntoResponse {
     let mut connection = connection.lock().unwrap();
 
     use schema::station::dsl::station;
-    let stations = station
+    match station
         .select(DetailedStation::as_select())
         .load(&mut *connection)
-        .expect("Error loading posts");
-
-    Json(stations)
+    {
+        Ok(stations) => (StatusCode::OK, Json(stations)).into_response(),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Error querying database".to_owned(),
+        )
+            .into_response(),
+    }
 }
 
-pub async fn get_stations(
-    State(connection): State<Arc<Mutex<PgConnection>>>,
-) -> Json<Vec<BasicStation>> {
+pub async fn get_stations(State(connection): State<Arc<Mutex<PgConnection>>>) -> impl IntoResponse {
     let mut connection = connection.lock().unwrap();
 
     use schema::station::dsl::station;
-    let stations = station
+    match station
         .select(BasicStation::as_select())
         .load(&mut *connection)
-        .expect("Error loading posts");
-
-    Json(stations)
+    {
+        Ok(stations) => (StatusCode::OK, Json(stations)).into_response(),
+        Err(_) => (
+            StatusCode::INTERNAL_SERVER_ERROR,
+            "Error querying db".to_owned(),
+        )
+            .into_response(),
+    }
 }
 
 pub async fn get_detailed_station(
@@ -51,6 +59,6 @@ pub async fn get_detailed_station(
         .first()
     {
         Some(s) => (StatusCode::OK, Json(s)).into_response(),
-        None => (StatusCode::NOT_FOUND, "Not found".to_string()).into_response(),
+        None => (StatusCode::NOT_FOUND, "Not found".to_owned()).into_response(),
     }
 }

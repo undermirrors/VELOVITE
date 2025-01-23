@@ -4,7 +4,7 @@ import { defineConfig } from 'vite';
 export default defineConfig({
 	server: {
         cors: {
-            origin: 'http://localhost:8000',
+            origin: '*',
             methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
             allowedHeaders: ['Content-Type', 'Authorization'],
             credentials: true

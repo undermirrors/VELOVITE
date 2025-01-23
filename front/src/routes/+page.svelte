@@ -11,7 +11,7 @@
 
     .overlay {
         position: absolute;
-        border-style:inset;
+        border-style:none;
         border-color: grey;
         font-size:medium;
         z-index: 999; /* Plus élevé que la carte */
@@ -25,13 +25,18 @@
     .overlay-logo {
         top: 20px;
         right: 20px;
+        padding:0;
+        background: none;
         border-radius: 60px;
     }
 
     .overlay-meteo {
         top: 20px;
+        border-style: none;
         right: 120px;
-        border-radius: 60px;
+        height: 60px;
+        width: 70px;
+        border-radius: 20px;
     }
 
     .overlay-date {
@@ -72,7 +77,12 @@
     <div class="overlay overlay-stations">
         Stations proches
     </div>
-
+    
+    <img
+    src="/soleil-nuage.svg"
+    alt="Meteo" 
+    class="overlay overlay-meteo"/>
+    
     <img
         src="/dessin.svg"
         alt="Velovite, le site qui vous donne des vélos, vite." 

@@ -1,7 +1,7 @@
 // @generated automatically by Diesel CLI.
 
 diesel::table! {
-    forecasts (id, timestamp) {
+    forecast (id, timestamp) {
         id -> Int4,
         timestamp -> Timestamp,
         available -> Int4,
@@ -9,7 +9,7 @@ diesel::table! {
 }
 
 diesel::table! {
-    stations (id) {
+    station (id) {
         id -> Int4,
         name -> Varchar,
         latitude -> Float8,
@@ -20,7 +20,4 @@ diesel::table! {
     }
 }
 
-diesel::allow_tables_to_appear_in_same_query!(
-    forecasts,
-    stations,
-);
+diesel::allow_tables_to_appear_in_same_query!(forecast, station,);

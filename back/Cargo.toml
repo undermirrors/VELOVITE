@@ -7,12 +7,12 @@ edition = "2021"
 diesel = { version = "2.2.6", features = ["postgres", "chrono"] }
 diesel_migrations = { version = "2.2.0", features = ["postgres"] }
 chrono = { version = "0.4", features = ["serde"] }
-axum = "0.7.9"
+axum = { version = "0.7.9", features = ["macros"] }
 tracing = "0.1"
 tracing-subscriber = "0.3"
 tokio = { version = "1.42.0", features = ["full"] }
 reqwest = { version = "0.12.12", features = ["json"] }
 serde = { version = "1.0.217", features = ["derive"] }
-serde_derive = "1.0.217"
 serde_json = "1.0.137"
 lazy_static = "1.5.0"
+dotenvy = "0.15.7"

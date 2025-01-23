@@ -1,8 +1,8 @@
 use diesel::prelude::*;
-use serde_derive::{Deserialize, Serialize};
+use serde::{Deserialize, Serialize};
 
-#[derive(Queryable, Selectable, Serialize, Deserialize, Insertable)]
-#[diesel(table_name = crate::schema::forecasts)]
+#[derive(Queryable, Selectable, Serialize, Deserialize, Insertable, Clone)]
+#[diesel(table_name = crate::schema::forecast)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Forecast {
     pub id: i32,
@@ -10,8 +10,8 @@ pub struct Forecast {
     pub available: i32,
 }
 
-#[derive(Queryable, Selectable, Serialize, Deserialize, Insertable, Debug)]
-#[diesel(table_name = crate::schema::stations)]
+#[derive(Queryable, Selectable, Serialize, Deserialize, Insertable, Debug, Clone)]
+#[diesel(table_name = crate::schema::station)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
 pub struct Station {
     pub id: i32,

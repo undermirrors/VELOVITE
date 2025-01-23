@@ -1,8 +1,7 @@
-use diesel::prelude::*;
-use serde_derive::Deserialize;
-use serde_derive::Serialize;
-use serde_json::Value;
 use crate::models::Station;
+use diesel::prelude::*;
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
 
 const URL: &str = "https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:pvo_patrimoine_voirie.pvostationvelov&outputFormat=application/json&SRSNAME=EPSG:4171&sortBy=gid";
 
@@ -10,8 +9,10 @@ pub async fn populate() {
     let response = reqwest::get(URL).await.unwrap().text().await.unwrap();
     let raw_stations: StationsData = serde_json::from_str(&response).unwrap();
     // convert the stations raw data into Stations struct
-    let stations: Vec<Station> = raw_stations.features.iter().map(|station| {
-        Station {
+    let stations: Vec<Station> = raw_stations
+        .features
+        .iter()
+        .map(|station| Station {
             id: station.properties.idstation,
             name: station.properties.nom.clone(),
             latitude: station.geometry.coordinates[1],
@@ -19,20 +20,20 @@ pub async fn populate() {
             adress: station.properties.adresse1.clone(),
             area: station.properties.commune.clone(),
             capacity: station.properties.nbbornettes,
-        }
-    }).collect();
+        })
+        .collect();
     // insert the stations into the database
     let database_url = std::env::var("DATABASE_URL").expect("Database URL must be set");
     let connection = &mut diesel::pg::PgConnection::establish(&database_url)
         .unwrap_or_else(|_| panic!("Error connecting to {}", database_url));
 
     // delete all stations first
-    diesel::delete(crate::schema::stations::table)
+    diesel::delete(crate::schema::station::table)
         .execute(connection)
         .expect("Error deleting stations");
 
     // insert the new stations
-    diesel::insert_into(crate::schema::stations::table)
+    diesel::insert_into(crate::schema::station::table)
         .values(&stations)
         .execute(connection)
         .expect("Error inserting stations");

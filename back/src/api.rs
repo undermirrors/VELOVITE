@@ -54,11 +54,9 @@ pub async fn get_detailed_station(
         .select(DetailedStation::as_select())
         .filter(schema::station::id.eq(id))
         .limit(1)
-        .load(&mut *connection)
-        .expect(&("Error loading station with id ".to_owned() + &id.to_string()))
-        .first()
+        .first(&mut *connection)
     {
-        Some(s) => (StatusCode::OK, Json(s)).into_response(),
-        None => (StatusCode::NOT_FOUND, "Not found".to_owned()).into_response(),
+        Ok(s) => (StatusCode::OK, Json(s)).into_response(),
+        Err(_) =>  (StatusCode::NOT_FOUND, "Not found".to_owned()).into_response(),
     }
 }

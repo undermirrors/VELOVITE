@@ -6,7 +6,7 @@ export async function getTables(): Promise<Table[]> {
     return await response.json();
 }
 
-export async function getDetails() : Promise<Details[]> {
+export async function getDetails(): Promise<Details[]> {
     const response = await fetch(url + 'detailed_stations/');
     return await response.json();
 }
@@ -14,4 +14,15 @@ export async function getDetails() : Promise<Details[]> {
 export async function getDetailsById(id: number): Promise<Details> {
     const response = await fetch(url + 'station/' + id)
     return await response.json();
+}
+
+class Marker {
+    id: number;
+    marker: Marker;
+    constructor(id: number, latitude: number, longitude: number) {
+        this.id = id;
+        this.marker = new Marker(id, latitude, longitude);
+    }
+
+
 }

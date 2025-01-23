@@ -4,7 +4,7 @@ use axum::extract::{Path, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
-use diesel::{ExpressionMethods, PgConnection, QueryDsl, RunQueryDsl, SelectableHelper};
+use diesel::{ExpressionMethods, PgConnection, PgTextExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
 use std::sync::{Arc, Mutex};
 
 pub async fn get_detailed_stations(
@@ -58,5 +58,23 @@ pub async fn get_detailed_station(
     {
         Ok(s) => (StatusCode::OK, Json(s)).into_response(),
         Err(_) =>  (StatusCode::NOT_FOUND, "Not found".to_owned()).into_response(),
+    }
+}
+
+pub async fn search_station(
+    State(connection): State<Arc<Mutex<PgConnection>>>,
+    Path(name): Path<String>,
+) -> impl IntoResponse {
+    let mut connection = connection.lock().unwrap();
+
+    use schema::station::dsl::station;
+    match station
+        .select(DetailedStation::as_select())
+        .filter(schema::station::name.ilike("%".to_owned() + &name + "%"))
+        .limit(5)
+        .load(&mut *connection)
+    {
+        Ok(s) => (StatusCode::OK, Json(s)).into_response(),
+        Err(_) => (StatusCode::NOT_FOUND, "Not found".to_owned()).into_response(),
     }
 }

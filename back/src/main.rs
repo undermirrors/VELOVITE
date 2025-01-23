@@ -12,7 +12,7 @@ use axum::routing::get;
 use axum::Router;
 use clap::Parser;
 
-use crate::api::{get_detailed_station, get_stations};
+use crate::api::{get_detailed_station, get_stations, search_station};
 use crate::mock::{get_detailed_stations_mock, get_stations_mock};
 use crate::populate::populate;
 use diesel::pg::PgConnection;
@@ -41,6 +41,7 @@ async fn main() {
         .route("/detailed_stations", get(get_detailed_stations))
         .route("/mock/detailed_stations", get(get_detailed_stations_mock()))
         .route("/station/:id", get(get_detailed_station))
+        .route("/search/:name", get(search_station))
         .with_state(connection)
         .layer(CorsLayer::permissive());
 

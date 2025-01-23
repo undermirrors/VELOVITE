@@ -1,16 +1,18 @@
 mod api;
 mod args;
+mod downloader;
 mod mock;
 mod models;
 mod populate;
 mod schema;
 
-use tower_http::cors::CorsLayer;
 use api::get_detailed_stations;
 use args::Args;
 use axum::routing::get;
 use axum::Router;
 use clap::Parser;
+use downloader::downloader_data;
+use tower_http::cors::CorsLayer;
 
 use crate::api::{get_detailed_station, get_stations, search_station};
 use crate::mock::{get_detailed_stations_mock, get_stations_mock};
@@ -19,6 +21,7 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use std::env;
+use std::process::exit;
 use std::sync::{Arc, Mutex};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
@@ -27,6 +30,11 @@ pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 async fn main() {
     tracing_subscriber::fmt::init();
     let args = Args::parse();
+
+    if args.download_training_data {
+        downloader_data().await;
+        return;
+    }
 
     let connection = Arc::new(Mutex::new(establish_connection()));
 

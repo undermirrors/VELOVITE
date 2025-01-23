@@ -45,6 +45,7 @@
               pkg-config
               postgresql
               lldb
+              diesel-cli
             ];
 
             LD_LIBRARY_PATH = lib.makeLibraryPath [];

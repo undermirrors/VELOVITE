@@ -1,14 +1,9 @@
 <script lang="ts">
     import 'leaflet/dist/leaflet.css';
     import {onMount} from 'svelte';
-    import { getTables } from '$lib/rust_api';
+    import {getDetailsById, getTables} from '$lib/rust_api';
 
     let mapContainer: string | HTMLElement;
-    interface Table {
-        id: number;
-        latitude: number;
-        longitude: number;
-    }
 
     let tables: Table[];
 
@@ -25,6 +20,9 @@
             // here to add marker
             // L.marker([table.latitude, table.longitude]).addTo(map);
         });
+        let res: Details;
+        res = await getDetailsById(1012);
+        console.log(res);
     });
 
 

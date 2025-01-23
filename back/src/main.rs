@@ -5,18 +5,19 @@ mod models;
 mod populate;
 mod schema;
 
-use api::get_stations;
+use api::get_detailed_stations;
 use args::Args;
 use axum::routing::get;
 use axum::Router;
 use clap::Parser;
 
-use crate::mock::get_stations_mock;
+use crate::mock::{get_detailed_stations_mock, get_stations_mock};
 use crate::populate::populate;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use std::env;
+use crate::api::get_stations;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
@@ -38,7 +39,9 @@ async fn main() {
     let app = Router::new()
         .route("/", get(|| async { "Hello, world!" }))
         .route("/stations", get(get_stations(connection)))
-        .route("/mock/stations", get(get_stations_mock()));
+        .route("/mock/stations", get(get_stations_mock()))
+        .route("/detailed_stations", get(get_detailed_stations(connection)))
+        .route("/mock/detailed_stations", get(get_detailed_stations_mock()));
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     tracing::info!("API Server is listening on port 8000");

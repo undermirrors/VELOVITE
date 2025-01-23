@@ -1,4 +1,4 @@
-use crate::models::Station;
+use crate::models::DetailedStation;
 use diesel::prelude::*;
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -13,10 +13,10 @@ pub async fn populate() {
     let raw_stations: StationsData = serde_json::from_str(&response).unwrap();
 
     // convert the stations raw data into Stations struct
-    let stations: Vec<Station> = raw_stations
+    let stations: Vec<DetailedStation> = raw_stations
         .features
         .iter()
-        .map(|station| Station {
+        .map(|station| DetailedStation {
             id: station.properties.idstation,
             name: station.properties.nom.clone(),
             latitude: station.geometry.coordinates[1],

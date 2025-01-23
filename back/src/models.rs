@@ -13,7 +13,7 @@ pub struct Forecast {
 #[derive(Queryable, Selectable, Serialize, Deserialize, Insertable, Debug, Clone)]
 #[diesel(table_name = crate::schema::station)]
 #[diesel(check_for_backend(diesel::pg::Pg))]
-pub struct Station {
+pub struct DetailedStation {
     pub id: i32,
     pub name: String,
     pub latitude: f64,
@@ -21,4 +21,13 @@ pub struct Station {
     pub adress: String,
     pub area: String,
     pub capacity: i32,
+}
+
+#[derive(Queryable, Selectable, Serialize, Deserialize, Insertable, Debug, Clone)]
+#[diesel(table_name = crate::schema::station)]
+#[diesel(check_for_backend(diesel::pg::Pg))]
+pub struct BasicStation {
+    pub id: i32,
+    pub latitude: f64,
+    pub longitude: f64,
 }

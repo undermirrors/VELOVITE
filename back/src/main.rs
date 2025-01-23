@@ -12,6 +12,7 @@ use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use std::env;
+use crate::populate::populate;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
@@ -29,13 +30,18 @@ async fn main() {
         .run_pending_migrations(MIGRATIONS)
         .expect("Error applying pending migrations");
 
+    populate().await;
+
     use self::schema::stations::dsl::*;
     let results = stations
-        .limit(5)
         .select(Station::as_select())
         .load(connection)
         .expect("Error loading posts");
 
+    for station in results {
+        println!("{:?}", station);
+    }
+    println!("Hello, world! bis");
     let app = Router::new()
         .route("/", get(|| async { "Hello, world!" }))
         .route("/stations", get(get_stations_mock()));

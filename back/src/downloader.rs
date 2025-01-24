@@ -236,7 +236,7 @@ mod date_format {
 }
 
 mod list_unix_time {
-    use chrono::{DateTime, NaiveDateTime, Utc};
+    use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
     use serde::{self, Deserialize, Deserializer, Serializer};
 
     // The signature of a serialize_with function must follow the pattern:
@@ -246,7 +246,7 @@ mod list_unix_time {
     //        S: Serializer
     //
     // although it may also be generic over the input types T.
-    pub fn serialize<S>(date: &Vec<DateTime<Utc>>, serializer: S) -> Result<S::Ok, S::Error>
+    pub fn serialize<S>(date: &[DateTime<Utc>], serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
@@ -269,7 +269,7 @@ mod list_unix_time {
         let s = Vec::deserialize(deserializer)?;
         let dt = s
             .iter()
-            .map(|d| DateTime::<Utc>::from_utc(NaiveDateTime::from_timestamp(*d, 0), Utc))
+            .map(|d| Utc.timestamp_opt(*d, 0).unwrap())
             .collect();
         Ok(dt)
     }

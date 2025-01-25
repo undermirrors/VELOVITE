@@ -3,7 +3,7 @@ use chrono::{DateTime, Utc};
 use tracing::{error, info};
 
 const WEATHER_URL: &str = "https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=45.7485&longitude=4.8467&start_date=2022-01-01&end_date=2025-01-23&hourly=temperature_2m,precipitation,wind_speed_10m&timeformat=unixtime&timezone=Europe%2FBerlin";
-const VELOV_URL: &str =  "https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json?maxfeatures=2000&filename=stations-velo-v-de-la-metropole-de-lyon---disponibilites-temps-reel";
+const VELOV_DOWNLOAD_PER_PAGE: u64 = 500000;
 
 pub async fn downloader_data() {
     info!("🌤️🚀 Downloading weather data...");
@@ -45,10 +45,11 @@ pub async fn downloader_data() {
     }
 
     info!("🚴‍♂️🚀 Downloading velov data...");
+    let mut url = format!("https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json?maxfeatures={}&filename=stations-velo-v-de-la-metropole-de-lyon---disponibilites-temps-reel", VELOV_DOWNLOAD_PER_PAGE);
     let mut data: Vec<Value> = vec![];
     let mut index = 1;
     loop {
-        let response = match reqwest::get(format!("{}&start={}", VELOV_URL, index)).await {
+        let response = match reqwest::get(url).await {
             Ok(resp) => match resp.text().await {
                 Ok(text) => text,
                 Err(e) => {
@@ -69,9 +70,41 @@ pub async fn downloader_data() {
                 break;
             }
         };
+
+        // store the data in a json file in a separate thread
+        // let data_clone = data.last().cloned();
+        let data_clone = raw_stations.values.clone();
+        let index_clone = index;
+        tokio::spawn(async move {
+            let json = match serde_json::to_string(&data_clone) {
+                Ok(json) => json,
+                Err(e) => {
+                    error!("❌ Failed to serialize data to JSON: {}", e);
+                    return;
+                }
+            };
+            if let Err(e) = std::fs::write(
+                format!(
+                    "datas/data-{}-{}.json",
+                    (index_clone - 1) * VELOV_DOWNLOAD_PER_PAGE,
+                    index_clone * VELOV_DOWNLOAD_PER_PAGE
+                ),
+                json,
+            ) {
+                error!("❌ Failed to write data to file: {}", e);
+            } else {
+                info!(
+                    "✅ Data successfully written to data-{}-{}.json",
+                    (index_clone - 1) * VELOV_DOWNLOAD_PER_PAGE,
+                    index_clone * VELOV_DOWNLOAD_PER_PAGE
+                );
+            }
+        });
+
         if raw_stations.next.is_empty() {
             break;
         }
+        url = raw_stations.next;
 
         data.append(&mut raw_stations.values);
 
@@ -141,7 +174,7 @@ pub struct VelovRoot {
     #[serde(rename = "layer_name")]
     pub layer_name: String,
     #[serde(rename = "nb_results")]
-    pub nb_results: u16,
+    pub nb_results: u64,
     pub next: String,
     #[serde(rename = "table_alias")]
     pub table_alias: Option<String>,

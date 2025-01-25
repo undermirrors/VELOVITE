@@ -48,6 +48,7 @@ pub async fn downloader_data() {
     let mut index = 168;
     let mut url = format!("https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json?maxfeatures={}&start={}&filename=stations-velo-v-de-la-metropole-de-lyon---disponibilites-temps-reel", VELOV_DOWNLOAD_PER_PAGE, index * VELOV_DOWNLOAD_PER_PAGE+1);
     loop {
+        info!("🚴‍♂️⏳ Downloading velov data... {}", index);
         let response = match reqwest::get(url).await {
             Ok(resp) => match resp.text().await {
                 Ok(text) => text,

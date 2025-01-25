@@ -5,6 +5,7 @@ mod mock;
 mod models;
 mod populate;
 mod schema;
+mod learning;
 
 use api::get_detailed_stations;
 use args::Args;
@@ -22,6 +23,8 @@ use diesel::prelude::*;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
 use std::env;
 use std::sync::{Arc, Mutex};
+use log::info;
+use crate::learning::learn;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
@@ -29,6 +32,12 @@ pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 async fn main() {
     tracing_subscriber::fmt::init();
     let args = Args::parse();
+
+    if args.train {
+        info!("Training !");
+        learn();
+        return;
+    }
 
     if args.download_training_data {
         downloader_data().await;

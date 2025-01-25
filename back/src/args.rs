@@ -7,4 +7,6 @@ pub struct Args {
     pub populate: bool,
     #[arg(long, default_value_t = false)]
     pub download_training_data: bool,
+    #[arg(short, long, default_value_t = false)]
+    pub train: bool,
 }

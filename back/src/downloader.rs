@@ -106,11 +106,11 @@ pub async fn download_velov(max_velov_features: u32, velov_start: u32) {
             }
         });
 
-        if raw_stations.next.is_empty() {
+        if raw_stations.next.is_none() {
             break;
         }
 
-        url = raw_stations.next;
+        url = raw_stations.next.unwrap();
         index += 1;
     }
 
@@ -166,7 +166,7 @@ pub struct VelovRoot {
     pub layer_name: String,
     #[serde(rename = "nb_results")]
     pub nb_results: u64,
-    pub next: String,
+    pub next: Option<String>,
     #[serde(rename = "table_alias")]
     pub table_alias: Option<String>,
     #[serde(rename = "table_href")]

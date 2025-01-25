@@ -45,8 +45,8 @@ pub async fn downloader_data() {
     }
 
     info!("🚴‍♂️🚀 Downloading velov data...");
-    let mut url = format!("https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json?maxfeatures={}&filename=stations-velo-v-de-la-metropole-de-lyon---disponibilites-temps-reel", VELOV_DOWNLOAD_PER_PAGE);
-    let mut index = 1;
+    let mut index = 168;
+    let mut url = format!("https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json?maxfeatures={}&start={}&filename=stations-velo-v-de-la-metropole-de-lyon---disponibilites-temps-reel", VELOV_DOWNLOAD_PER_PAGE, index * VELOV_DOWNLOAD_PER_PAGE+1);
     loop {
         let response = match reqwest::get(url).await {
             Ok(resp) => match resp.text().await {
@@ -106,46 +106,7 @@ pub async fn downloader_data() {
         index += 1;
     }
 
-    info!("📂🔄 Merge all data...");
-
-    let mut merged_data: Vec<Value> = vec![];
-    for i in 0..index {
-        let file = format!(
-            "datas/data-{}-{}.json",
-            i * VELOV_DOWNLOAD_PER_PAGE,
-            (i + 1) * VELOV_DOWNLOAD_PER_PAGE
-        );
-        let data = match std::fs::read_to_string(file) {
-            Ok(data) => data,
-            Err(e) => {
-                error!("❌ Failed to read data from file: {}", e);
-                return;
-            }
-        };
-        merged_data.append(&mut match serde_json::from_str(&data) {
-            Ok(stations) => stations,
-            Err(e) => {
-                error!("❌ Failed to parse JSON: {}", e);
-                return;
-            }
-        });
-    }
-
-    // store the data in a json file
-    info!("📥 Downloaded velov data...");
-    let json = match serde_json::to_string(&merged_data) {
-        Ok(json) => json,
-        Err(e) => {
-            error!("❌ Failed to serialize data to JSON: {}", e);
-            return;
-        }
-    };
-    if let Err(e) = std::fs::write("data.json", json) {
-        error!("❌ Failed to write data to file: {}", e);
-    } else {
-        info!("✅ Data successfully written to data.json");
-    }
-    info!("📥 Downloaded velov data...");
+    info!("📥 Downloaded velov data ✅");
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

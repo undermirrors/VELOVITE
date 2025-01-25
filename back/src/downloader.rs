@@ -3,9 +3,9 @@ use chrono::{DateTime, Utc};
 use tracing::{error, info};
 
 const WEATHER_URL: &str = "https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=45.7485&longitude=4.8467&start_date=2022-01-01&end_date=2025-01-23&hourly=temperature_2m,precipitation,wind_speed_10m&timeformat=unixtime&timezone=Europe%2FBerlin";
-const VELOV_DOWNLOAD_PER_PAGE: u64 = 500000;
+const VELOV_URL: &str = "https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json?filename=stations-velo-v-de-la-metropole-de-lyon---disponibilites-temps-reel";
 
-pub async fn downloader_data() {
+pub async fn download_weather() {
     info!("🌤️🚀 Downloading weather data...");
     let response = match reqwest::get(WEATHER_URL).await {
         Ok(resp) => match resp.text().await {
@@ -43,10 +43,17 @@ pub async fn downloader_data() {
     } else {
         info!("✅ Data successfully written to weather.json");
     }
+}
 
+pub async fn download_velov(max_velov_features: u32, velov_start: u32) {
     info!("🚴‍♂️🚀 Downloading velov data...");
-    let mut index = 168;
-    let mut url = format!("https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json?maxfeatures={}&start={}&filename=stations-velo-v-de-la-metropole-de-lyon---disponibilites-temps-reel", VELOV_DOWNLOAD_PER_PAGE, index * VELOV_DOWNLOAD_PER_PAGE+1);
+    let mut index = velov_start;
+    let mut url = format!(
+        "{}?maxfeatures={}&start={}",
+        VELOV_URL,
+        max_velov_features,
+        index * max_velov_features + 1
+    );
     loop {
         info!("🚴‍♂️⏳ Downloading velov data... {}", index);
         let response = match reqwest::get(url).await {
@@ -83,9 +90,9 @@ pub async fn downloader_data() {
             };
             if let Err(e) = std::fs::write(
                 format!(
-                    "datas/data-{}-{}.json",
-                    (index - 1) * VELOV_DOWNLOAD_PER_PAGE,
-                    index * VELOV_DOWNLOAD_PER_PAGE
+                    "velov_datas/data-{}-{}.json",
+                    (index - 1) * max_velov_features,
+                    index * max_velov_features
                 ),
                 json,
             ) {
@@ -93,8 +100,8 @@ pub async fn downloader_data() {
             } else {
                 info!(
                     "✅ Data successfully written to data-{}-{}.json",
-                    (index - 1) * VELOV_DOWNLOAD_PER_PAGE,
-                    index * VELOV_DOWNLOAD_PER_PAGE
+                    (index - 1) * max_velov_features,
+                    index * max_velov_features
                 );
             }
         });
@@ -102,8 +109,8 @@ pub async fn downloader_data() {
         if raw_stations.next.is_empty() {
             break;
         }
-        url = raw_stations.next;
 
+        url = raw_stations.next;
         index += 1;
     }
 
@@ -239,7 +246,7 @@ mod date_format {
 }
 
 mod list_unix_time {
-    use chrono::{DateTime, NaiveDateTime, TimeZone, Utc};
+    use chrono::{DateTime, TimeZone, Utc};
     use serde::{self, Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S>(date: &[DateTime<Utc>], serializer: S) -> Result<S::Ok, S::Error>

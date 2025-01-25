@@ -1,30 +1,30 @@
 mod api;
 mod args;
 mod downloader;
+mod learning;
 mod mock;
 mod models;
 mod populate;
 mod schema;
-mod learning;
 
 use api::get_detailed_stations;
 use args::Args;
 use axum::routing::get;
 use axum::Router;
 use clap::Parser;
-use downloader::downloader_data;
+use downloader::{download_velov, download_weather};
 use tower_http::cors::CorsLayer;
 
 use crate::api::{get_detailed_station, get_stations, search_station};
+use crate::learning::learn;
 use crate::mock::{get_detailed_stations_mock, get_stations_mock};
 use crate::populate::populate;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use log::info;
 use std::env;
 use std::sync::{Arc, Mutex};
-use log::info;
-use crate::learning::learn;
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
 
@@ -39,8 +39,12 @@ async fn main() {
         return;
     }
 
-    if args.download_training_data {
-        downloader_data().await;
+    if args.download_weather_data {
+        download_weather().await;
+        return;
+    }
+    if args.download_velov_data {
+        download_velov(args.max_velov_features, args.velov_start).await;
         return;
     }
 

@@ -46,7 +46,6 @@ pub async fn downloader_data() {
 
     info!("🚴‍♂️🚀 Downloading velov data...");
     let mut url = format!("https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json?maxfeatures={}&filename=stations-velo-v-de-la-metropole-de-lyon---disponibilites-temps-reel", VELOV_DOWNLOAD_PER_PAGE);
-    let mut data: Vec<Value> = vec![];
     let mut index = 1;
     loop {
         let response = match reqwest::get(url).await {
@@ -63,7 +62,7 @@ pub async fn downloader_data() {
             }
         };
         info!("📥 Downloaded velov data... {}", index);
-        let mut raw_stations: VelovRoot = match serde_json::from_str(&response) {
+        let raw_stations: VelovRoot = match serde_json::from_str(&response) {
             Ok(stations) => stations,
             Err(e) => {
                 error!("❌ Failed to parse JSON: {}", e);
@@ -73,10 +72,8 @@ pub async fn downloader_data() {
 
         // store the data in a json file in a separate thread
         // let data_clone = data.last().cloned();
-        let data_clone = raw_stations.values.clone();
-        let index_clone = index;
         tokio::spawn(async move {
-            let json = match serde_json::to_string(&data_clone) {
+            let json = match serde_json::to_string(&raw_stations.values) {
                 Ok(json) => json,
                 Err(e) => {
                     error!("❌ Failed to serialize data to JSON: {}", e);
@@ -86,8 +83,8 @@ pub async fn downloader_data() {
             if let Err(e) = std::fs::write(
                 format!(
                     "datas/data-{}-{}.json",
-                    (index_clone - 1) * VELOV_DOWNLOAD_PER_PAGE,
-                    index_clone * VELOV_DOWNLOAD_PER_PAGE
+                    (index - 1) * VELOV_DOWNLOAD_PER_PAGE,
+                    index * VELOV_DOWNLOAD_PER_PAGE
                 ),
                 json,
             ) {
@@ -95,8 +92,8 @@ pub async fn downloader_data() {
             } else {
                 info!(
                     "✅ Data successfully written to data-{}-{}.json",
-                    (index_clone - 1) * VELOV_DOWNLOAD_PER_PAGE,
-                    index_clone * VELOV_DOWNLOAD_PER_PAGE
+                    (index - 1) * VELOV_DOWNLOAD_PER_PAGE,
+                    index * VELOV_DOWNLOAD_PER_PAGE
                 );
             }
         });
@@ -106,13 +103,37 @@ pub async fn downloader_data() {
         }
         url = raw_stations.next;
 
-        data.append(&mut raw_stations.values);
-
         index += 1;
     }
 
+    info!("📂🔄 Merge all data...");
+
+    let mut merged_data: Vec<Value> = vec![];
+    for i in 0..index {
+        let file = format!(
+            "datas/data-{}-{}.json",
+            i * VELOV_DOWNLOAD_PER_PAGE,
+            (i + 1) * VELOV_DOWNLOAD_PER_PAGE
+        );
+        let data = match std::fs::read_to_string(file) {
+            Ok(data) => data,
+            Err(e) => {
+                error!("❌ Failed to read data from file: {}", e);
+                return;
+            }
+        };
+        merged_data.append(&mut match serde_json::from_str(&data) {
+            Ok(stations) => stations,
+            Err(e) => {
+                error!("❌ Failed to parse JSON: {}", e);
+                return;
+            }
+        });
+    }
+
     // store the data in a json file
-    let json = match serde_json::to_string(&data) {
+    info!("📥 Downloaded velov data...");
+    let json = match serde_json::to_string(&merged_data) {
         Ok(json) => json,
         Err(e) => {
             error!("❌ Failed to serialize data to JSON: {}", e);
@@ -124,6 +145,7 @@ pub async fn downloader_data() {
     } else {
         info!("✅ Data successfully written to data.json");
     }
+    info!("📥 Downloaded velov data...");
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

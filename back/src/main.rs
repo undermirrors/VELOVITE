@@ -13,10 +13,10 @@ use axum::routing::get;
 use axum::Router;
 use clap::Parser;
 use downloader::{download_velov, download_weather};
+use learning::filter_velov_data;
 use tower_http::cors::CorsLayer;
 
 use crate::api::{get_detailed_station, get_stations, search_station};
-use crate::learning::learn;
 use crate::mock::{get_detailed_stations_mock, get_stations_mock};
 use crate::populate::populate;
 use diesel::pg::PgConnection;
@@ -33,9 +33,9 @@ async fn main() {
     tracing_subscriber::fmt::init();
     let args = Args::parse();
 
-    if args.train {
-        info!("Training !");
-        learn();
+    if args.filter_velov_data {
+        info!("🧹 Filtering velov data...");
+        filter_velov_data();
         return;
     }
 

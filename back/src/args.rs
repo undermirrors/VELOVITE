@@ -15,5 +15,5 @@ pub struct Args {
     pub download_weather_data: bool,
 
     #[arg(short, long, default_value_t = false)]
-    pub train: bool,
+    pub filter_velov_data: bool,
 }

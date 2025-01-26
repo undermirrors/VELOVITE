@@ -247,22 +247,24 @@ mod date_format {
 
 mod list_unix_time {
     use chrono::{DateTime, TimeZone, Utc};
-    use serde::{self, Deserialize, Deserializer, Serializer};
+    use serde::{self, ser::SerializeSeq, Deserialize, Deserializer, Serializer};
 
     pub fn serialize<S>(date: &[DateTime<Utc>], serializer: S) -> Result<S::Ok, S::Error>
     where
         S: Serializer,
     {
-        let s = date.iter().map(|d| d.timestamp()).collect::<Vec<i64>>();
-        let json = serde_json::to_string(&s).map_err(serde::ser::Error::custom)?;
-        serializer.serialize_str(&json)
+        let mut seq = serializer.serialize_seq(Some(date.len()))?;
+        for d in date {
+            seq.serialize_element(&d.timestamp())?;
+        }
+        seq.end()
     }
 
     pub fn deserialize<'de, D>(deserializer: D) -> Result<Vec<DateTime<Utc>>, D::Error>
     where
         D: Deserializer<'de>,
     {
-        let s = Vec::deserialize(deserializer)?;
+        let s = Vec::<i64>::deserialize(deserializer)?;
         let dt = s
             .iter()
             .map(|d| Utc.timestamp_opt(*d, 0).unwrap())

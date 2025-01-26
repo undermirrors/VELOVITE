@@ -1,6 +1,7 @@
 back/target
 back/velov_datas
 back/weather.json
+back/velov_datas.tar
 .direnv
 .idea
 data

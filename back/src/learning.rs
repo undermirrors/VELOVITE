@@ -91,3 +91,9 @@ struct UsefulData {
     bikes: u32,
     stands: u32,
 }
+#[derive(Debug, Serialize, Deserialize, Clone)]
+#[derive(Debug, Serialize, Deserialize, Clone)]
+struct SchoolHolidays {
+    start: NaiveDate,
+    end: NaiveDate,
+}

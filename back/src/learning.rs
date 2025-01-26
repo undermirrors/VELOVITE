@@ -21,10 +21,10 @@ fn load_data() -> Result<Vec<UsefulData>, Error> {
     let original_data_len = Arc::new(Mutex::new(0));
     let compliant_data_len = Arc::new(Mutex::new(0));
 
-    let read_dir_length = fs::read_dir("./data")?.count();
+    let read_dir_length = fs::read_dir("./velov_datas")?.count();
     let visited = Mutex::new(0);
 
-    let mut data = fs::read_dir("./data")?
+    let mut data = fs::read_dir("./velov_datas")?
         .par_bridge()
         .map(|e| e.unwrap())
         .flat_map(|entry| {

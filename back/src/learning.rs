@@ -10,7 +10,7 @@ use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
-use std::io::BufReader;
+use std::io::{BufReader, BufWriter};
 use std::sync::{Arc, Mutex};
 
 const CHUNK_SIZE: usize = 12;
@@ -31,7 +31,9 @@ pub fn merged_data() {
     info!("✅ Weather data loaded!");
 
     info!("📥 Loading velov training data..");
-    let velov: Vec<UsefulData> = read_useful_data_from_file();
+    let file = File::open("velov_training_data.json").unwrap();
+    let reader = BufReader::new(file);
+    let velov: Vec<UsefulData> = serde_json::from_reader(reader).unwrap();
     info!("✅ Velov training data loaded!");
 
     info!("🔄 Merging data..");
@@ -85,12 +87,7 @@ pub fn merged_data() {
     });
     info!("✅ Data merged!");
 
-    //Serializing data..");
-    info!("🔄 Serializing data..");
-    let json = serde_json::to_string(&*merged_data.lock().unwrap()).unwrap();
-    info!("✍️ Writing merged data to file..");
-    fs::write("./merged_data.json", json).unwrap();
-    info!("✅ Merged data written to merged_data.json!");
+    write_merged_data_to_file(Arc::try_unwrap(merged_data).unwrap().into_inner().unwrap());
 }
 
 pub fn filter_velov_data() {
@@ -202,26 +199,29 @@ pub fn filter_velov_data() {
     data.sort_by(|a, b| a.date.cmp(&b.date));
     info!("✅ Done !");
 
-    write_useful_data_to_file(data);
-    info!("✅ Tar archive created as velov_training_data.tar.gz");
+    info!("🔄 Serializing data..");
+    let file = File::create("./velov_training_data.json").unwrap();
+    let writer = BufWriter::new(file);
+    serde_json::to_writer(writer, &data).unwrap();
+    info!("✅ velov_training_data.json written!");
 }
 
-fn read_useful_data_from_file() -> Vec<UsefulData> {
+fn read_merged_data_from_file() -> Vec<MergedData> {
     info!("📖 Reading useful data from files..");
     // List all files in the directory
-    let mut files: Vec<_> = fs::read_dir("useful_data")
+    let mut files: Vec<_> = fs::read_dir("merged_data")
         .unwrap()
         .map(|f| f.unwrap())
         .filter(|entry| entry.file_name() != ".gitkeep")
         .collect();
     files.sort_by_key(|a| a.path());
 
-    let data: Vec<UsefulData> = files
+    let data: Vec<MergedData> = files
         .par_iter()
         .flat_map(|file| {
             let file = File::open(file.path()).unwrap();
             let reader = BufReader::new(file);
-            let file_data: Vec<UsefulData> = serde_json::from_reader(reader).unwrap();
+            let file_data: Vec<MergedData> = serde_json::from_reader(reader).unwrap();
             file_data
         })
         .collect();
@@ -230,14 +230,14 @@ fn read_useful_data_from_file() -> Vec<UsefulData> {
     data
 }
 
-fn write_useful_data_to_file(data: Vec<UsefulData>) {
+fn write_merged_data_to_file(data: Vec<MergedData>) {
     info!("✍️ Splitting data into {} files..", CHUNK_SIZE);
     let chunk_size = data.len().div_ceil(CHUNK_SIZE); // Calculate chunk size to split data into 12 parts
     data.par_chunks(chunk_size)
         .into_par_iter()
         .enumerate()
         .for_each(|(i, chunk)| {
-            let file_name = format!("useful_data/velov_training_data_part_{}.json", i + 1);
+            let file_name = format!("merged_data/merged_data_part_{}.json", i + 1);
             fs::write(&file_name, serde_json::to_string(chunk).unwrap()).unwrap();
             info!("✅ Part {} written to {}", i + 1, file_name);
         });

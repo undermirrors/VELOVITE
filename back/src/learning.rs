@@ -91,6 +91,8 @@ pub fn filter_velov_data() {
             *compliant_stats.get_mut(&value.id).unwrap() += 1;
         }
     }
+
+    let original_stats = original_stats.lock().unwrap();
     //display the stats
     info!("📊 Stats per id :");
     for (id, _) in compliant_stats.iter() {
@@ -98,9 +100,8 @@ pub fn filter_velov_data() {
             "🆔 {} : {}/{} ({}%)",
             id,
             compliant_stats.get(id).unwrap(),
-            original_stats.lock().unwrap().get(id).unwrap(),
-            (*compliant_stats.get(id).unwrap() as f32
-                / *original_stats.lock().unwrap().get(id).unwrap() as f32)
+            original_stats.get(id).unwrap(),
+            (*compliant_stats.get(id).unwrap() as f32 / *original_stats.get(id).unwrap() as f32)
                 * 100.0
         );
     }

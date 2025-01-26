@@ -152,10 +152,10 @@ pub struct Hourly {
     #[serde(with = "list_unix_time")]
     pub time: Vec<DateTime<Utc>>,
     #[serde(rename = "temperature_2m")]
-    pub temperature_2m: Vec<f64>,
-    pub precipitation: Vec<f64>,
+    pub temperature_2m: Vec<f32>,
+    pub precipitation: Vec<f32>,
     #[serde(rename = "wind_speed_10m")]
-    pub wind_speed_10m: Vec<f64>,
+    pub wind_speed_10m: Vec<f32>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

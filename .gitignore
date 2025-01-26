@@ -3,3 +3,5 @@ back/velov_datas
 back/weather.json
 .direnv
 .idea
+data
+velov_training_data*

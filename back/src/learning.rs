@@ -41,13 +41,10 @@ pub fn filter_velov_data() {
             let useful_data = file_data
                 .iter()
                 .map(|value| {
-                    if let std::collections::hash_map::Entry::Vacant(e) =
-                        original_stats_tmp.entry(value.number as u32)
-                    {
-                        e.insert(1);
-                    } else {
-                        *original_stats_tmp.get_mut(&(value.number as u32)).unwrap() += 1;
-                    }
+                    original_stats_tmp
+                        .entry(value.number as u32)
+                        .and_modify(|e| *e += 1)
+                        .or_insert(1);
 
                     UsefulData {
                         id: value.number as u32,
@@ -63,13 +60,10 @@ pub fn filter_velov_data() {
             {
                 let mut original_stats_guard = original_stats.lock().unwrap();
                 for (id, _) in original_stats_tmp.iter() {
-                    if let std::collections::hash_map::Entry::Vacant(e) =
-                        original_stats_guard.entry(*id)
-                    {
-                        e.insert(1);
-                    } else {
-                        *original_stats_guard.get_mut(id).unwrap() += 1;
-                    }
+                    original_stats_guard
+                        .entry(*id)
+                        .and_modify(|e| *e += 1)
+                        .or_insert(1);
                 }
             }
 
@@ -83,13 +77,12 @@ pub fn filter_velov_data() {
 
     // Display some stats
     //filter stats per id
-    let mut compliant_stats: HashMap<u32, u32> = std::collections::HashMap::new();
+    let mut compliant_stats: HashMap<u32, u32> = HashMap::new();
     for value in data.iter() {
-        if let std::collections::hash_map::Entry::Vacant(e) = compliant_stats.entry(value.id) {
-            e.insert(1);
-        } else {
-            *compliant_stats.get_mut(&value.id).unwrap() += 1;
-        }
+        compliant_stats
+            .entry(value.id)
+            .and_modify(|e| *e += 1)
+            .or_insert(1);
     }
     //display the stats
     info!("📊 Stats per id :");

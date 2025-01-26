@@ -93,6 +93,7 @@ pub fn filter_velov_data() {
         .unwrap()
         .par_bridge()
         .map(|e| e.unwrap())
+        .filter(|entry| entry.file_name() != ".gitkeep")
         .flat_map(|entry| {
             info!(
                 "📖 {}% Reading {}",

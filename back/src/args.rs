@@ -16,4 +16,6 @@ pub struct Args {
 
     #[arg(short, long, default_value_t = false)]
     pub filter_velov_data: bool,
+    #[arg(short = 'M', long, default_value_t = false)]
+    pub merge_datas: bool,
 }

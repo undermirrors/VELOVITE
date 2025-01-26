@@ -13,7 +13,7 @@ use axum::routing::get;
 use axum::Router;
 use clap::Parser;
 use downloader::{download_velov, download_weather};
-use learning::filter_velov_data;
+use learning::{filter_velov_data, merged_data};
 use tower_http::cors::CorsLayer;
 
 use crate::api::{get_detailed_station, get_stations, search_station};
@@ -22,7 +22,6 @@ use crate::populate::populate;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
-use log::info;
 use std::env;
 use std::sync::{Arc, Mutex};
 
@@ -34,8 +33,11 @@ async fn main() {
     let args = Args::parse();
 
     if args.filter_velov_data {
-        info!("🧹 Filtering velov data...");
         filter_velov_data();
+        return;
+    }
+    if args.merge_datas {
+        merged_data();
         return;
     }
 

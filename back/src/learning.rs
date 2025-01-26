@@ -1,6 +1,6 @@
-use crate::downloader::Value;
-use chrono::{DateTime, NaiveDate, Utc};
-use log::info;
+use crate::downloader::{Value, WeatherRoot};
+use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc};
+use log::{error, info};
 use rayon::iter::ParallelIterator;
 use rayon::prelude::ParallelBridge;
 use serde::{Deserialize, Serialize};
@@ -10,7 +10,78 @@ use std::fs::File;
 use std::io::BufReader;
 use std::sync::{Arc, Mutex};
 
+pub fn merged_data() {
+    info!("📥 Loading school holidays data..");
+    let school_holidays: Vec<SchoolHolidays> = serde_json::from_str(
+        &fs::read_to_string("school_holidays.json")
+            .unwrap()
+            .to_string(),
+    )
+    .unwrap();
+    info!("✅ School holidays data loaded!");
+
+    info!("📥 Loading weather data..");
+    let weather: WeatherRoot =
+        serde_json::from_str(&fs::read_to_string("weather.json").unwrap().to_string()).unwrap();
+    info!("✅ Weather data loaded!");
+
+    info!("📥 Loading velov training data..");
+    let velov: Vec<UsefulData> = serde_json::from_str(
+        &fs::read_to_string("velov_training_data.json")
+            .unwrap()
+            .to_string(),
+    )
+    .unwrap();
+    info!("✅ Velov training data loaded!");
+
+    info!("🔄 Merging data..");
+    let mut merged_data: Vec<MergedData> = Vec::new();
+    velov.iter().for_each(|velov_data| {
+        let date = velov_data.date;
+        let school_holiday = school_holidays.iter().any(|holiday| {
+            date.naive_local().date() >= holiday.start && date.naive_local().date() <= holiday.end
+        });
+
+        let weather_index = match weather.hourly.time.iter().position(|time| {
+            let time_without_seconds = time.with_second(0).unwrap().with_nanosecond(0).unwrap();
+            let date_without_seconds = date.with_second(0).unwrap().with_nanosecond(0).unwrap();
+            time_without_seconds == date_without_seconds
+        }) {
+            Some(index) => index,
+            None => {
+                error!("❌ Failed to find weather data for date: {}", date);
+                return;
+            }
+        };
+
+        let precipitation_data = weather.hourly.precipitation[weather_index];
+        let temperature_data = weather.hourly.temperature_2m[weather_index];
+        let wind_speed_data = weather.hourly.wind_speed_10m[weather_index];
+
+        merged_data.push(MergedData {
+            id: velov_data.id,
+            hour: date.time().hour() as u8,
+            day: date.date_naive().day() as u8,
+            month: date.date_naive().month() as u8,
+            week_day: date.date_naive().weekday().number_from_monday() as u8,
+            holidays: school_holiday,
+            free_stands: velov_data.stands,
+            precipitation: precipitation_data,
+            temperature: temperature_data,
+            wind_speed: wind_speed_data,
+        });
+    });
+    info!("✅ Data merged!");
+
+    //Serializing data..");
+    info!("🔄 Serializing data..");
+    let json = serde_json::to_string(&merged_data).unwrap();
+    info!("✍️ Writing merged data to file..");
+    fs::write("./merged_data.json", json).unwrap();
+    info!("✅ Merged data written to merged_data.json!");
+}
 pub fn filter_velov_data() {
+    info!("🧹 Filtering velov data...");
     let original_stats = Arc::new(Mutex::new(HashMap::<u32, u32>::new()));
     let original_data_len = Arc::new(Mutex::new(0));
     let compliant_data_len = Arc::new(Mutex::new(0));
@@ -144,6 +215,9 @@ struct MergedData {
     week_day: u8,
     holidays: bool,
     free_stands: u32,
+    precipitation: f32,
+    temperature: f32,
+    wind_speed: f32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

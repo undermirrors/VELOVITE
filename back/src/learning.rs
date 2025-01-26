@@ -181,7 +181,7 @@ pub fn filter_velov_data() {
 
     info!("🧹 Deduping..");
     let before_dedup = data.len();
-    data.dedup_by(|a, b| a.date == b.date);
+    data.dedup_by(|a, b| a.date == b.date && a.id == b.id);
     info!("🗑️ Deduped {} entries !", before_dedup - data.len());
 
     info!("🔄 Sorting data");

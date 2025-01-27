@@ -1,15 +1,20 @@
 use crate::downloader::download_weather_forecast;
+use crate::learning::{MergedData, SchoolHolidays};
 use crate::models::BasicStation;
+use crate::utils::distance;
 use crate::{models::DetailedStation, schema};
-use axum::extract::{Path, State};
+use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
+use chrono::{Datelike, NaiveDateTime, Timelike};
 use diesel::{
     ExpressionMethods, PgConnection, PgTextExpressionMethods, QueryDsl, RunQueryDsl,
     SelectableHelper,
 };
+use std::collections::HashMap;
 use std::sync::{Arc, Mutex};
+use tracing::info;
 
 pub async fn get_weather_forecast() -> impl IntoResponse {
     let forecast_data = download_weather_forecast().await;
@@ -92,4 +97,60 @@ pub async fn search_station(
         Ok(s) => (StatusCode::OK, Json(s)).into_response(),
         Err(_) => (StatusCode::NOT_FOUND, "Not found".to_owned()).into_response(),
     }
+}
+
+type SharedData = Arc<(HashMap<u32, Vec<MergedData>>, Vec<SchoolHolidays>)>;
+
+pub async fn predict(
+    State(data): State<SharedData>,
+    // Query(id): Query<u32>,
+    // Query(date): Query<NaiveDateTime>,
+) -> impl IntoResponse {
+    let id = 16004;
+    let date = NaiveDateTime::parse_from_str("2025-01-27T12:00:00", "%Y-%m-%dT%H:%M:%S").unwrap();
+    info!("🔍 Filter on the good station id");
+    let station_data = match data.0.get(&id) {
+        Some(data) => data,
+        None => return (StatusCode::NOT_FOUND, "Station not found".to_owned()).into_response(),
+    };
+
+    let is_holidays = data
+        .1
+        .iter()
+        .any(|holiday| date.date() >= holiday.start && date.date() <= holiday.end);
+
+    //todo!("use the weather prediction");
+    let precipitation = 12.0;
+    let temperature = 20.0;
+    let wind_speed = 10.0;
+
+    let mut wanted_point = MergedData {
+        id,
+        hour: date.time().hour(),
+        day: date.day(),
+        month: date.month(),
+        week_day: date.weekday().num_days_from_monday(),
+        holidays: is_holidays,
+        free_stands: 0,
+        available_bikes: 0,
+        precipitation,
+        temperature,
+        wind_speed,
+    };
+
+    let nearest_data = station_data.iter().min_by(|a, b| {
+        distance(a, &wanted_point)
+            .partial_cmp(&distance(b, &wanted_point))
+            .unwrap()
+    });
+
+    if let Some(nearest) = nearest_data {
+        wanted_point.free_stands = nearest.free_stands;
+        wanted_point.available_bikes = nearest.available_bikes;
+        info!("🎯 Nearest point found: {:?}", nearest);
+    } else {
+        return (StatusCode::NOT_FOUND, "No data found".to_owned()).into_response();
+    }
+
+    (StatusCode::OK, Json(wanted_point)).into_response()
 }

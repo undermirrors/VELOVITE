@@ -1,8 +1,6 @@
-use std::collections::HashMap;
-
-use chrono::serde::ts_seconds;
-use chrono::{DateTime, Utc};
 use ::serde::{Deserialize, Serialize};
+use chrono::{DateTime, Utc};
+use std::collections::HashMap;
 use tracing::{error, info};
 
 const WEATHER_FORECAST_URL: &str = "https://api.open-meteo.com/v1/forecast?latitude=45.7485&longitude=4.8467&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m&timeformat=unixtime";

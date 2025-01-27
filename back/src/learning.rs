@@ -58,10 +58,10 @@ pub fn merged_data() {
 
             MergedData {
                 id: velov_data.id,
-                hour: date.time().hour() as u8,
-                day: date.date_naive().day() as u8,
-                month: date.date_naive().month() as u8,
-                week_day: date.date_naive().weekday().number_from_monday() as u8,
+                hour: date.time().hour(),
+                day: date.date_naive().day(),
+                month: date.date_naive().month(),
+                week_day: date.date_naive().weekday().number_from_monday(),
                 holidays: school_holiday,
                 free_stands: velov_data.stands,
                 available_bikes: velov_data.bikes,
@@ -250,22 +250,22 @@ struct UsefulData {
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct MergedData {
-    id: u32,
-    hour: u8,
-    day: u8,
-    month: u8,
-    week_day: u8,
-    holidays: bool,
-    free_stands: u32,
-    available_bikes: u32,
-    precipitation: f32,
-    temperature: f32,
-    wind_speed: f32,
+pub struct MergedData {
+    pub id: u32,
+    pub hour: u32,
+    pub day: u32,
+    pub month: u32,
+    pub week_day: u32,
+    pub holidays: bool,
+    pub free_stands: u32,
+    pub available_bikes: u32,
+    pub precipitation: f32,
+    pub temperature: f32,
+    pub wind_speed: f32,
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
-struct SchoolHolidays {
-    start: NaiveDate,
-    end: NaiveDate,
+pub struct SchoolHolidays {
+    pub start: NaiveDate,
+    pub end: NaiveDate,
 }

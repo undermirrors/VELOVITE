@@ -6,14 +6,15 @@ mod mock;
 mod models;
 mod populate;
 mod schema;
+mod utils;
 
-use api::get_detailed_stations;
+use api::{get_detailed_stations, predict};
 use args::Args;
 use axum::routing::get;
 use axum::Router;
 use clap::Parser;
 use downloader::{download_velov, download_weather};
-use learning::{filter_velov_data, merged_data};
+use learning::{filter_velov_data, merged_data, read_merged_data_from_file, SchoolHolidays};
 use tower_http::cors::CorsLayer;
 
 use crate::api::{get_detailed_station, get_stations, search_station};
@@ -56,6 +57,9 @@ async fn main() {
         populate().await;
     }
 
+    let data = read_merged_data_from_file();
+    let holidays: Vec<SchoolHolidays> =
+        serde_json::from_str(&std::fs::read_to_string("school_holidays.json").unwrap()).unwrap();
     let app = Router::new()
         .route("/", get(|| async { "Hello, world!" }))
         .route("/weather_forecast", get(api::get_weather_forecast))
@@ -66,6 +70,8 @@ async fn main() {
         .route("/station/:id", get(get_detailed_station))
         .route("/search/:name", get(search_station))
         .with_state(connection)
+        .route("/predict", get(predict))
+        .with_state(Arc::new((data, holidays)))
         .layer(CorsLayer::permissive());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();

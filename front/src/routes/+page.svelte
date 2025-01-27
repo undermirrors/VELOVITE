@@ -73,7 +73,16 @@
     .overlay-meteo {
         top: 20px;
         border-style: none;
-        right: 120px;
+        right: 100px;
+        height: 60px;
+        width: 70px;
+        border-radius: 20px;
+    }
+
+    .overlay-temperature {
+        top: 20px;
+        border-style: none;
+        right: 190px;
         height: 60px;
         width: 70px;
         border-radius: 20px;
@@ -134,6 +143,11 @@
     alt="Meteo" 
     class="overlay overlay-meteo"/>
     
+    <div class="overlay overlay-temperature" alt="Meteo">
+         féfroua
+        
+    </div>
+
     <img
         src="/dessin.svg"
         alt="Velovite, le site qui vous donne des vélos, vite." 

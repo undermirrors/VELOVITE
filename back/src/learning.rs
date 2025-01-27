@@ -1,4 +1,4 @@
-use crate::downloader::{Value, WeatherRoot};
+use crate::downloader::{Value, WeatherData};
 use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc};
 use log::{error, info};
 use rayon::iter::{
@@ -26,7 +26,7 @@ pub fn merged_data() {
     info!("✅ School holidays data loaded!");
 
     info!("📥 Loading weather data..");
-    let weather: WeatherRoot =
+    let weather: HashMap<DateTime<Utc>, WeatherData> =
         serde_json::from_str(&fs::read_to_string("weather.json").unwrap().to_string()).unwrap();
     info!("✅ Weather data loaded!");
 
@@ -37,57 +37,48 @@ pub fn merged_data() {
     info!("✅ Velov training data loaded!");
 
     info!("🔄 Merging data..");
-    let merged_data = Arc::new(Mutex::new(Vec::new()));
-    velov.par_iter().for_each(|velov_data| {
-        let date = velov_data.date;
-        let school_holiday = school_holidays.iter().any(|holiday| {
-            date.naive_local().date() >= holiday.start && date.naive_local().date() <= holiday.end
-        });
+    let merged: Vec<MergedData> = velov
+        .par_iter()
+        .map(|velov_data| {
+            let date = velov_data.date;
+            let school_holiday = school_holidays.iter().any(|holiday| {
+                date.naive_local().date() >= holiday.start
+                    && date.naive_local().date() <= holiday.end
+            });
 
-        let weather_index = match weather.hourly.time.par_iter().position_any(|time| {
-            let time_without_seconds = time
-                .with_minute(0)
-                .unwrap()
-                .with_second(0)
-                .unwrap()
-                .with_nanosecond(0)
-                .unwrap();
-            let date_without_seconds = date
-                .with_minute(0)
-                .unwrap()
-                .with_second(0)
-                .unwrap()
-                .with_nanosecond(0)
-                .unwrap();
-            time_without_seconds == date_without_seconds
-        }) {
-            Some(index) => index,
-            None => {
-                error!("❌ Failed to find weather data for date: {}", date);
-                return;
+            let weather_data = weather
+                .get(
+                    &date
+                        .with_minute(0)
+                        .unwrap()
+                        .with_second(0)
+                        .unwrap()
+                        .with_nanosecond(0)
+                        .unwrap(),
+                )
+                .unwrap_or_else(|| panic!("❌ No weather data for {}", date));
+            let precipitation_data = weather_data.precipitation;
+            let temperature_data = weather_data.temperature_2m;
+            let wind_speed_data = weather_data.wind_speed_10m;
+
+            MergedData {
+                id: velov_data.id,
+                hour: date.time().hour() as u8,
+                day: date.date_naive().day() as u8,
+                month: date.date_naive().month() as u8,
+                week_day: date.date_naive().weekday().number_from_monday() as u8,
+                holidays: school_holiday,
+                free_stands: velov_data.stands,
+                precipitation: precipitation_data,
+                temperature: temperature_data,
+                wind_speed: wind_speed_data,
             }
-        };
+        })
+        .collect();
 
-        let precipitation_data = weather.hourly.precipitation[weather_index];
-        let temperature_data = weather.hourly.temperature_2m[weather_index];
-        let wind_speed_data = weather.hourly.wind_speed_10m[weather_index];
-
-        merged_data.lock().unwrap().push(MergedData {
-            id: velov_data.id,
-            hour: date.time().hour() as u8,
-            day: date.date_naive().day() as u8,
-            month: date.date_naive().month() as u8,
-            week_day: date.date_naive().weekday().number_from_monday() as u8,
-            holidays: school_holiday,
-            free_stands: velov_data.stands,
-            precipitation: precipitation_data,
-            temperature: temperature_data,
-            wind_speed: wind_speed_data,
-        });
-    });
     info!("✅ Data merged!");
 
-    write_merged_data_to_file(Arc::try_unwrap(merged_data).unwrap().into_inner().unwrap());
+    write_merged_data_to_file(merged);
 }
 
 pub fn filter_velov_data() {

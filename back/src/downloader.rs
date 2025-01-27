@@ -1,4 +1,7 @@
+use std::collections::HashMap;
+
 use ::serde::{Deserialize, Serialize};
+use chrono::serde::ts_seconds;
 use chrono::{DateTime, Utc};
 use tracing::{error, info};
 
@@ -30,8 +33,33 @@ pub async fn download_weather() {
         }
     };
 
+    let weather_mapped: HashMap<DateTime<Utc>, WeatherData> = weather
+        .hourly
+        .time
+        .iter()
+        .zip(
+            weather.hourly.temperature_2m.iter().zip(
+                weather
+                    .hourly
+                    .precipitation
+                    .iter()
+                    .zip(weather.hourly.wind_speed_10m.iter()),
+            ),
+        )
+        .map(|(time, (temperature, (precipitation, wind_speed)))| {
+            (
+                *time,
+                WeatherData {
+                    temperature_2m: *temperature,
+                    precipitation: *precipitation,
+                    wind_speed_10m: *wind_speed,
+                },
+            )
+        })
+        .collect();
+
     // store the data in a json file
-    let json = match serde_json::to_string(&weather) {
+    let json = match serde_json::to_string(&weather_mapped) {
         Ok(json) => json,
         Err(e) => {
             error!("❌ Failed to serialize data to JSON: {}", e);
@@ -144,6 +172,15 @@ pub struct HourlyUnits {
     pub precipitation: String,
     #[serde(rename = "wind_speed_10m")]
     pub wind_speed_10m: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct WeatherData {
+    // #[serde(with = "ts_seconds")]
+    // pub time: DateTime<Utc>,
+    pub temperature_2m: f32,
+    pub precipitation: f32,
+    pub wind_speed_10m: f32,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]

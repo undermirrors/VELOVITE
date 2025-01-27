@@ -1,5 +1,6 @@
 back/target
 back/velov_datas
+back/merged_data
 back/weather.json
 back/velov_datas.tar
 .direnv

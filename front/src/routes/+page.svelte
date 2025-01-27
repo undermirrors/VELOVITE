@@ -1,5 +1,7 @@
 <script>
 	import LeafletMap from '$lib/LeafletMap.svelte';
+    
+
 </script>
 
 <style>
@@ -42,8 +44,8 @@
     .overlay-date {
         padding: 10px;
         border-radius: 20px;
-        top: 20%;
-        left: 5%;
+        top: 4%;
+        left: 2%;
         height: 20px;
         width: 150px;
     }
@@ -51,15 +53,15 @@
     .overlay-adress {
         padding: 10px;
         border-radius: 20px;
-        top: 10%;
-        left: 5%;
+        top: 12%;
+        left: 2%;
         height: 20px;
         width: 150px;
     }
 
     .overlay-stations {
-        top: 30%;
-        left: 5%;
+        top: 20%;
+        left: 2%;
         padding: 10px;
         border-radius: 20px;
         height: 200px;
@@ -79,7 +81,7 @@
     </div>
     
     <img
-    src="/soleil-nuage.svg"
+    src="/autre-chose.png"
     alt="Meteo" 
     class="overlay overlay-meteo"/>
     

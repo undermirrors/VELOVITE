@@ -86,6 +86,7 @@
         height: 60px;
         width: 70px;
         border-radius: 20px;
+        text-align: center;
     }
 
     .overlay-date {
@@ -143,7 +144,7 @@
     alt="Meteo" 
     class="overlay overlay-meteo"/>
     
-    <div class="overlay overlay-temperature" alt="Meteo">
+    <div class="overlay overlay-temperature">
          féfroua
         
     </div>

@@ -10,6 +10,19 @@
     const currentMinutes = now.getMinutes().toString().padStart(2, '0');
     const currentTime = `${currentHour}:${currentMinutes}`;
     
+    // Paramètres météo
+    const météo = 0;
+    var src_img = "beaucoup-pluie.svg";
+
+    const soleil = [0,1];
+    const soleil_nuage = [2];
+    const nuage = [3];
+    const pluie = [51,53,55,61,63,65,80,81,82];
+    const verglas = [56,57,66,67];
+    const brouillard = [45,48];
+    const neige = [71,73,75,77,85,86];
+    const orage = [95,96,99];
+
 </script>
 
 <style>
@@ -100,7 +113,7 @@
     </div>
     
     <img
-    src="/autre-chose.png"
+    src={src_img}
     alt="Meteo" 
     class="overlay overlay-meteo"/>
     

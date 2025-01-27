@@ -1,12 +1,78 @@
 use std::collections::HashMap;
 
-use ::serde::{Deserialize, Serialize};
 use chrono::serde::ts_seconds;
 use chrono::{DateTime, Utc};
+use ::serde::{Deserialize, Serialize};
 use tracing::{error, info};
 
+const WEATHER_FORECAST_URL: &str = "https://api.open-meteo.com/v1/forecast?latitude=45.7485&longitude=4.8467&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m&timeformat=unixtime";
 const WEATHER_URL: &str = "https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=45.7485&longitude=4.8467&start_date=2022-01-01&end_date=2025-01-23&hourly=temperature_2m,precipitation,wind_speed_10m&timeformat=unixtime&timezone=Europe%2FBerlin";
 const VELOV_URL: &str = "https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json?filename=stations-velo-v-de-la-metropole-de-lyon---disponibilites-temps-reel";
+
+pub async fn download_weather_forecast() -> Result<HashMap<DateTime<Utc>, WeatherData>, &'static str>
+{
+    info!("🌤️🚀 Downloading weather forecast data...");
+    let response = reqwest::get(WEATHER_FORECAST_URL)
+        .await
+        .map_err(|e| {
+            error!("❌ Failed to download data: {}", e);
+            "Failed to download data"
+        })?
+        .text()
+        .await
+        .map_err(|e| {
+            error!("❌ Failed to read response text: {}", e);
+            "Failed to read response text"
+        })?;
+
+    info!("📥 Downloaded weather forecast data...");
+    let weather: WeatherRoot = serde_json::from_str(&response).map_err(|e| {
+        error!("❌ Failed to parse JSON: {}", e);
+        "Failed to parse JSON"
+    })?;
+
+    let weather_mapped: HashMap<DateTime<Utc>, WeatherData> = weather
+        .hourly
+        .time
+        .iter()
+        .zip(
+            weather.hourly.temperature_2m.iter().zip(
+                weather.hourly.precipitation.iter().zip(
+                    weather.hourly.weather_code.unwrap().iter().zip(
+                        weather
+                            .hourly
+                            .precipitation_probability
+                            .unwrap()
+                            .iter()
+                            .zip(weather.hourly.wind_speed_10m.iter()),
+                    ),
+                ),
+            ),
+        )
+        .map(
+            |(
+                time,
+                (
+                    temperature,
+                    (precipitation, (weather_code, (precipitation_probability, wind_speed))),
+                ),
+            )| {
+                (
+                    *time,
+                    WeatherData {
+                        temperature_2m: *temperature,
+                        precipitation_probability: Some(*precipitation_probability),
+                        precipitation: *precipitation,
+                        weather_code: Some(*weather_code),
+                        wind_speed_10m: *wind_speed,
+                    },
+                )
+            },
+        )
+        .collect();
+
+    Ok(weather_mapped)
+}
 
 pub async fn download_weather() {
     info!("🌤️🚀 Downloading weather data...");
@@ -51,7 +117,9 @@ pub async fn download_weather() {
                 *time,
                 WeatherData {
                     temperature_2m: *temperature,
+                    precipitation_probability: None,
                     precipitation: *precipitation,
+                    weather_code: None,
                     wind_speed_10m: *wind_speed,
                 },
             )
@@ -144,7 +212,6 @@ pub async fn download_velov(max_velov_features: u32, velov_start: u32) {
 
     info!("📥 Downloaded velov data ✅");
 }
-
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct WeatherRoot {
@@ -169,7 +236,10 @@ pub struct HourlyUnits {
     pub time: String,
     #[serde(rename = "temperature_2m")]
     pub temperature_2m: String,
+    #[serde(rename = "precipitation_probability")]
+    pub precipitation_probability: Option<String>,
     pub precipitation: String,
+    pub weather_code: Option<String>,
     #[serde(rename = "wind_speed_10m")]
     pub wind_speed_10m: String,
 }
@@ -180,7 +250,9 @@ pub struct WeatherData {
     // pub time: DateTime<Utc>,
     pub temperature_2m: f32,
     pub precipitation: f32,
+    pub weather_code: Option<i64>,
     pub wind_speed_10m: f32,
+    pub precipitation_probability: Option<i64>,
 }
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
@@ -190,7 +262,11 @@ pub struct Hourly {
     pub time: Vec<DateTime<Utc>>,
     #[serde(rename = "temperature_2m")]
     pub temperature_2m: Vec<f32>,
+    #[serde(rename = "precipitation_probability")]
+    pub precipitation_probability: Option<Vec<i64>>,
     pub precipitation: Vec<f32>,
+    #[serde(rename = "weather_code")]
+    pub weather_code: Option<Vec<i64>>,
     #[serde(rename = "wind_speed_10m")]
     pub wind_speed_10m: Vec<f32>,
 }

@@ -58,6 +58,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/", get(|| async { "Hello, world!" }))
+        .route("/weather_forecast", get(api::get_weather_forecast))
         .route("/stations", get(get_stations))
         .route("/mock/stations", get(get_stations_mock()))
         .route("/detailed_stations", get(get_detailed_stations))

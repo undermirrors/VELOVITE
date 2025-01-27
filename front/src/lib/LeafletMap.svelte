@@ -1,7 +1,7 @@
 <script lang="ts">
     import 'leaflet/dist/leaflet.css';
     import {onMount} from 'svelte';
-    import {getTables} from '$lib/rust_api';
+    import {getTables, getWeatherForecast} from '$lib/rust_api';
 
 
     let mapContainer: string | HTMLElement;
@@ -46,6 +46,10 @@
 
         let markers = (await getTables()).map(table => new Markers(table.id, table.latitude, table.longitude));
         markers.forEach(marker => marker.getMarker().addTo(map));
+
+        let meteo: Map<string, WeatherForecast> = await getWeatherForecast();
+
+        console.log(meteo['2025-01-27T00:00:00Z']);
     });
 </script>
 

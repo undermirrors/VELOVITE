@@ -12,17 +12,34 @@
     
     // Paramètres météo
     const météo = 0;
-    var src_img = "beaucoup-pluie.svg";
+    var src_img = "/meteo/Verglas.png";
 
-    const soleil = [0,1];
-    const soleil_nuage = [2];
-    const nuage = [3];
-    const pluie = [51,53,55,61,63,65,80,81,82];
-    const verglas = [56,57,66,67];
-    const brouillard = [45,48];
-    const neige = [71,73,75,77,85,86];
-    const orage = [95,96,99];
+    let soleil = new Set([0,1]);
+    let soleil_nuage = new Set([2]);
+    let nuage = new Set([3]);
+    let pluie = new Set([51,53,55,61,63,65,80,81,82]);
+    let verglas = new Set([56,57,66,67]);
+    let brouillard = new Set([45,48]);
+    let neige = new Set([71,73,75,77,85,86]);
+    let orage = new Set([95,96,99]);
 
+    if (soleil_nuage.has(météo)) {
+        src_img = "/meteo/soleil-nuage.svg";
+    } else if (nuage.has(météo)) {
+        src_img = "/meteo/nuage.svg";
+    } else if (pluie.has(météo)) {
+        src_img = "/meteo/pluie.svg";
+    } else if (verglas.has(météo)) {
+        src_img = "/meteo/Verglas.png";
+    } else if (brouillard.has(météo)) {
+        src_img = "/meteo/Brouillard.png";
+    } else if (neige.has(météo)) {
+        src_img = "/meteo/Neige.png";
+    } else if (orage.has(météo)) {
+        src_img = "/meteo/tempete.png";
+    } else {
+        src_img = "/meteo/autre-chose.png";
+    }
 </script>
 
 <style>

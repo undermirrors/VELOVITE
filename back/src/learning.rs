@@ -1,19 +1,14 @@
 use crate::downloader::{Value, WeatherData};
 use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc};
-use log::{error, info};
-use rayon::iter::{
-    IndexedParallelIterator, IntoParallelIterator, IntoParallelRefIterator, ParallelIterator,
-};
+use log::info;
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rayon::prelude::ParallelBridge;
-use rayon::slice::ParallelSlice;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::fs;
 use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::sync::{Arc, Mutex};
-
-const CHUNK_SIZE: usize = 12;
 
 pub fn merged_data() {
     info!("📥 Loading school holidays data..");
@@ -78,8 +73,20 @@ pub fn merged_data() {
         .collect();
 
     info!("✅ Data merged!");
+    info!("🔄 Hashmapping the data");
 
-    write_merged_data_to_file(merged);
+    // merge the data per id in a hashmap
+    let hashmaped: HashMap<u32, Vec<MergedData>> =
+        merged.iter().fold(HashMap::new(), |mut acc, val| {
+            acc.entry(val.id)
+                .and_modify(|v: &mut Vec<MergedData>| v.push(val.clone()))
+                .or_default();
+            acc
+        });
+
+    info!("✅ Data merged!");
+
+    write_merged_data_to_file(hashmaped);
 }
 
 pub fn filter_velov_data() {
@@ -198,7 +205,7 @@ pub fn filter_velov_data() {
     info!("✅ velov_training_data.json written!");
 }
 
-fn read_merged_data_from_file() -> Vec<MergedData> {
+pub fn read_merged_data_from_file() -> HashMap<u32, Vec<MergedData>> {
     info!("📖 Reading useful data from files..");
     // List all files in the directory
     let mut files: Vec<_> = fs::read_dir("merged_data")
@@ -208,31 +215,29 @@ fn read_merged_data_from_file() -> Vec<MergedData> {
         .collect();
     files.sort_by_key(|a| a.path());
 
-    let data: Vec<MergedData> = files
-        .par_iter()
-        .flat_map(|file| {
-            let file = File::open(file.path()).unwrap();
-            let reader = BufReader::new(file);
-            let file_data: Vec<MergedData> = serde_json::from_reader(reader).unwrap();
-            file_data
-        })
-        .collect();
+    let data = Arc::new(Mutex::new(HashMap::<u32, Vec<MergedData>>::new()));
 
+    files.par_iter().for_each(|file| {
+        let file = File::open(file.path()).unwrap();
+        let reader = BufReader::new(file);
+        let file_data: Vec<MergedData> = serde_json::from_reader(reader).unwrap();
+
+        let mut data_guard = data.lock().unwrap();
+        data_guard.insert(file_data.first().unwrap().id, file_data);
+    });
     info!("✅ Useful data read from files!");
-    data
+    Arc::try_unwrap(data).unwrap().into_inner().unwrap()
 }
 
-fn write_merged_data_to_file(data: Vec<MergedData>) {
-    info!("✍️ Splitting data into {} files..", CHUNK_SIZE);
-    let chunk_size = data.len().div_ceil(CHUNK_SIZE); // Calculate chunk size to split data into 12 parts
-    data.par_chunks(chunk_size)
-        .into_par_iter()
-        .enumerate()
-        .for_each(|(i, chunk)| {
-            let file_name = format!("merged_data/merged_data_part_{}.json", i + 1);
-            fs::write(&file_name, serde_json::to_string(chunk).unwrap()).unwrap();
-            info!("✅ Part {} written to {}", i + 1, file_name);
-        });
+fn write_merged_data_to_file(data: HashMap<u32, Vec<MergedData>>) {
+    info!("✍️ Splitting data into files..");
+    data.par_iter().for_each(|(key, value)| {
+        let file_path = format!("merged_data/{}.json", key);
+        let file = File::create(file_path).unwrap();
+        let writer = BufWriter::new(file);
+        serde_json::to_writer(writer, value).unwrap();
+    });
+    info!("✅ Data written to files!");
 }
 
 #[derive(Debug, Serialize, Deserialize, Clone)]

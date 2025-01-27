@@ -1,7 +1,15 @@
 <script>
 	import LeafletMap from '$lib/LeafletMap.svelte';
     
+    // Obtenir la date actuelle au format ISO (YYYY-MM-DD)
+    const today = new Date().toISOString().split('T')[0];
 
+    // Obtenir l'heure actuelle au format HH:MM
+    const now = new Date();
+    const currentHour = now.getHours().toString().padStart(2, '0'); // Ajouter un 0 si nécessaire
+    const currentMinutes = now.getMinutes().toString().padStart(2, '0');
+    const currentTime = `${currentHour}:${currentMinutes}`;
+    
 </script>
 
 <style>
@@ -50,7 +58,7 @@
         width: 150px;
     }
 
-    .overlay-adress {
+    .overlay-heure {
         padding: 10px;
         border-radius: 20px;
         top: 12%;
@@ -59,8 +67,17 @@
         width: 150px;
     }
 
-    .overlay-stations {
+    .overlay-adress {
+        padding: 10px;
+        border-radius: 20px;
         top: 20%;
+        left: 2%;
+        height: 20px;
+        width: 150px;
+    }
+
+    .overlay-stations {
+        top: 28%;
         left: 2%;
         padding: 10px;
         border-radius: 20px;
@@ -72,10 +89,12 @@
 </style>
 
 <div>
-    <input class="overlay overlay-adress" type="text" id="adress" name="adress" placeholder="Adresse" />
-     
-    <input class="overlay overlay-date" type="date" id="date" name="date" placeholder="Date"/>
+    <input class="overlay overlay-date" type="date" id="date" name="date" value={today} placeholder="Date"/>
 
+    <input class="overlay overlay-heure" type="time" id="heure" name="heure" value={currentTime} placeholder="Adresse" />
+
+    <input class="overlay overlay-adress" type="text" id="adress" name="adress" placeholder="Adresse" />
+    
     <div class="overlay overlay-stations">
         Stations proches
     </div>

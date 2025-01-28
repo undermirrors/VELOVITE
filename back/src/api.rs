@@ -1,19 +1,15 @@
 use crate::downloader::download_weather_forecast;
-use crate::learning::{MergedData, SchoolHolidays};
+use crate::learning::MergedData;
 use crate::models::BasicStation;
 use crate::utils::distance;
+use crate::AppState;
 use crate::{models::DetailedStation, schema};
 use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
 use chrono::{Datelike, NaiveDateTime, Timelike};
-use diesel::{
-    ExpressionMethods, PgConnection, PgTextExpressionMethods, QueryDsl, RunQueryDsl,
-    SelectableHelper,
-};
-use std::collections::HashMap;
-use std::sync::{Arc, Mutex};
+use diesel::{ExpressionMethods, PgTextExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
 use tracing::info;
 
 pub async fn get_weather_forecast() -> impl IntoResponse {
@@ -27,10 +23,8 @@ pub async fn get_weather_forecast() -> impl IntoResponse {
             .into_response(),
     }
 }
-pub async fn get_detailed_stations(
-    State(connection): State<Arc<Mutex<PgConnection>>>,
-) -> impl IntoResponse {
-    let mut connection = connection.lock().unwrap();
+pub async fn get_detailed_stations(State(state): State<AppState>) -> impl IntoResponse {
+    let mut connection = state.connection.lock().unwrap();
 
     use schema::station::dsl::station;
     match station
@@ -46,8 +40,8 @@ pub async fn get_detailed_stations(
     }
 }
 
-pub async fn get_stations(State(connection): State<Arc<Mutex<PgConnection>>>) -> impl IntoResponse {
-    let mut connection = connection.lock().unwrap();
+pub async fn get_stations(State(state): State<AppState>) -> impl IntoResponse {
+    let mut connection = state.connection.lock().unwrap();
 
     use schema::station::dsl::station;
     match station
@@ -64,10 +58,10 @@ pub async fn get_stations(State(connection): State<Arc<Mutex<PgConnection>>>) ->
 }
 
 pub async fn get_detailed_station(
-    State(connection): State<Arc<Mutex<PgConnection>>>,
+    State(state): State<AppState>,
     Path(id): Path<i32>,
 ) -> impl IntoResponse {
-    let mut connection = connection.lock().unwrap();
+    let mut connection = state.connection.lock().unwrap();
 
     use schema::station::dsl::station;
     match station
@@ -82,10 +76,10 @@ pub async fn get_detailed_station(
 }
 
 pub async fn search_station(
-    State(connection): State<Arc<Mutex<PgConnection>>>,
+    State(state): State<AppState>,
     Path(name): Path<String>,
 ) -> impl IntoResponse {
-    let mut connection = connection.lock().unwrap();
+    let mut connection = state.connection.lock().unwrap();
 
     use schema::station::dsl::station;
     match station
@@ -99,23 +93,19 @@ pub async fn search_station(
     }
 }
 
-type SharedData = Arc<(HashMap<u32, Vec<MergedData>>, Vec<SchoolHolidays>)>;
-
 pub async fn predict(
-    State(data): State<SharedData>,
-    // Query(id): Query<u32>,
-    // Query(date): Query<NaiveDateTime>,
+    State(data): State<AppState>,
+    Query(id): Query<u32>,
+    Query(date): Query<NaiveDateTime>,
 ) -> impl IntoResponse {
-    let id = 16004;
-    let date = NaiveDateTime::parse_from_str("2025-01-27T12:00:00", "%Y-%m-%dT%H:%M:%S").unwrap();
     info!("🔍 Filter on the good station id");
-    let station_data = match data.0.get(&id) {
+    let station_data = match data.data.get(&id) {
         Some(data) => data,
         None => return (StatusCode::NOT_FOUND, "Station not found".to_owned()).into_response(),
     };
 
     let is_holidays = data
-        .1
+        .holidays
         .iter()
         .any(|holiday| date.date() >= holiday.start && date.date() <= holiday.end);
 

@@ -8,13 +8,15 @@ mod populate;
 mod schema;
 mod utils;
 
-use api::{get_detailed_stations, predict};
+use api::{get_detailed_stations, get_weather_forecast, predict};
 use args::Args;
 use axum::routing::get;
 use axum::Router;
 use clap::Parser;
 use downloader::{download_velov, download_weather};
-use learning::{filter_velov_data, merged_data, read_merged_data_from_file, SchoolHolidays};
+use learning::{
+    filter_velov_data, merged_data, read_merged_data_from_file, MergedData, SchoolHolidays,
+};
 use tower_http::cors::CorsLayer;
 
 use crate::api::{get_detailed_station, get_stations, search_station};
@@ -23,10 +25,18 @@ use crate::populate::populate;
 use diesel::pg::PgConnection;
 use diesel::prelude::*;
 use diesel_migrations::{embed_migrations, EmbeddedMigrations, MigrationHarness};
+use std::collections::HashMap;
 use std::env;
 use std::sync::{Arc, Mutex};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
+
+#[derive(Clone)]
+pub struct AppState {
+    connection: Arc<Mutex<PgConnection>>,
+    data: Arc<HashMap<u32, Vec<MergedData>>>,
+    holidays: Arc<Vec<SchoolHolidays>>,
+}
 
 #[tokio::main]
 async fn main() {
@@ -51,27 +61,30 @@ async fn main() {
         return;
     }
 
-    let connection = Arc::new(Mutex::new(establish_connection()));
+    let app_state = AppState {
+        connection: Arc::new(Mutex::new(establish_connection())),
+        data: Arc::new(read_merged_data_from_file()),
+        holidays: Arc::new(
+            serde_json::from_str(&std::fs::read_to_string("school_holidays.json").unwrap())
+                .unwrap(),
+        ),
+    };
 
     if args.populate {
         populate().await;
     }
 
-    let data = read_merged_data_from_file();
-    let holidays: Vec<SchoolHolidays> =
-        serde_json::from_str(&std::fs::read_to_string("school_holidays.json").unwrap()).unwrap();
     let app = Router::new()
         .route("/", get(|| async { "Hello, world!" }))
-        .route("/weather_forecast", get(api::get_weather_forecast))
+        .route("/weather_forecast", get(get_weather_forecast))
         .route("/stations", get(get_stations))
         .route("/mock/stations", get(get_stations_mock()))
         .route("/detailed_stations", get(get_detailed_stations))
         .route("/mock/detailed_stations", get(get_detailed_stations_mock()))
         .route("/station/:id", get(get_detailed_station))
         .route("/search/:name", get(search_station))
-        .with_state(connection)
         .route("/predict", get(predict))
-        .with_state(Arc::new((data, holidays)))
+        .with_state(app_state)
         .layer(CorsLayer::permissive());
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();

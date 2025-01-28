@@ -37,10 +37,12 @@ services:
       - db
     environment:
       - DATABASE_URL=postgresql://username:password@db:5432/velovite
+      - BACKEND_PARAM=${BACKEND_PARAM:--m}
     networks:
       - velovite_network
     volumes:
       - ./back/merged_data/:/usr/src/velovite-back/merged_data/
+      - ./back/merged_data_mock/:/usr/src/velovite-back/merged_data_mock/
 
 volumes:
   postgres_data:

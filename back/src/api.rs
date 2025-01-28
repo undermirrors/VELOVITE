@@ -11,7 +11,7 @@ use axum::Json;
 use chrono::{Datelike, NaiveDateTime, Timelike};
 use diesel::{ExpressionMethods, PgTextExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
-use serde::Deserialize;
+use serde::{Deserialize, Serialize};
 use tracing::info;
 
 pub async fn get_weather_forecast() -> impl IntoResponse {
@@ -101,6 +101,13 @@ pub struct PredictParams {
     date: NaiveDateTime,
 }
 
+#[derive(Debug, Serialize, Deserialize, Clone)]
+pub struct AvailabilityData {
+    id: u32,
+    free_stands: u32,
+    available_bikes: u32,
+}
+
 pub async fn predict(
     State(data): State<AppState>,
     Query(params): Query<PredictParams>,
@@ -172,5 +179,9 @@ pub async fn predict(
         return (StatusCode::NOT_FOUND, "No data found".to_owned()).into_response();
     }
 
-    (StatusCode::OK, Json(wanted_point)).into_response()
+    (StatusCode::OK, Json(AvailabilityData {
+        id: wanted_point.id,
+        available_bikes: wanted_point.available_bikes,
+        free_stands: wanted_point.free_stands,
+    })).into_response()
 }

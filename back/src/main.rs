@@ -110,10 +110,15 @@ async fn main() {
                         "}
             }),
         )
+        .route("/weather_forecast", get(get_weather_forecast))
+        .route("/station/:id", get(get_detailed_station))
+        .route("/search/:name", get(search_station))
+        .route("/predict", get(predict))
+        .with_state(app_state.clone())
         .layer(CorsLayer::permissive());
 
     let app = if args.mock {
-        app.merge(mock_router(app_state))
+        app.merge(mock_router())
     } else {
         app.merge(normal_router(app_state))
     };
@@ -137,15 +142,10 @@ pub fn establish_connection() -> PgConnection {
     connection
 }
 
-fn mock_router(app_state: AppState) -> Router {
+fn mock_router() -> Router {
     Router::new()
         .route("/detailed_stations", get(get_detailed_stations_mock()))
         .route("/stations", get(get_stations_mock()))
-        .route("/weather_forecast", get(get_weather_forecast))
-        .route("/station/:id", get(get_detailed_station))
-        .route("/search/:name", get(search_station))
-        .route("/predict", get(predict))
-        .with_state(app_state)
         .layer(CorsLayer::permissive())
 }
 
@@ -153,10 +153,6 @@ fn normal_router(app_state: AppState) -> Router {
     Router::new()
         .route("/detailed_stations", get(get_detailed_stations))
         .route("/stations", get(get_stations))
-        .route("/weather_forecast", get(get_weather_forecast))
-        .route("/station/:id", get(get_detailed_station))
-        .route("/search/:name", get(search_station))
-        .route("/predict", get(predict))
         .with_state(app_state)
         .layer(CorsLayer::permissive())
 }

@@ -40,6 +40,10 @@
     } else {
         src_img = "/meteo/autre-chose.png";
     }
+
+    //paramètres température
+    var temp=15;
+
 </script>
 
 <style>
@@ -94,6 +98,9 @@
         width: 70px;
         border-radius: 20px;
         text-align: center;
+        align-content: center;
+        font-size: larger;
+        font-weight: bold;
     }
 
     .overlay-date {
@@ -152,7 +159,7 @@
     class="overlay overlay-meteo"/>
     
     <div class="overlay overlay-temperature">
-         féfroua
+        {temp}°C
         
     </div>
 

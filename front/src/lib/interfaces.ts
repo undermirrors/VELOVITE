@@ -5,11 +5,13 @@ interface WeatherForecast {
     precipitation_probability: number;
     weather_code: number;
 }
+
 interface Table {
     id: number;
     latitude: number;
     longitude: number;
 }
+
 interface Details {
     id: number;
     name: string;

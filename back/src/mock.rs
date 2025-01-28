@@ -17,7 +17,6 @@ lazy_static! {
     ];
 }
 
-
 lazy_static! {
     static ref DETAILED_STATIONS_MOCK: [DetailedStation; 2] = [
         DetailedStation {
@@ -40,7 +39,6 @@ lazy_static! {
         }
     ];
 }
-
 
 pub fn get_detailed_stations_mock() -> Json<&'static [DetailedStation; 2]> {
     Json(&*DETAILED_STATIONS_MOCK)

@@ -14,8 +14,9 @@ use axum::routing::get;
 use axum::Router;
 use clap::Parser;
 use downloader::{download_velov, download_weather};
+use indoc::indoc;
 use learning::{
-    filter_velov_data, merged_data, read_merged_data_from_file, MergedData, SchoolHolidays,
+    filter_velov_data, merge_data, read_merged_data_from_file, MergedData, SchoolHolidays,
 };
 use tower_http::cors::CorsLayer;
 
@@ -30,7 +31,6 @@ use std::env;
 use std::sync::{Arc, Mutex};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
-
 #[derive(Clone)]
 pub struct AppState {
     connection: Arc<Mutex<PgConnection>>,
@@ -48,7 +48,7 @@ async fn main() {
         return;
     }
     if args.merge_datas {
-        merged_data();
+        merge_data();
         return;
     }
 
@@ -63,7 +63,11 @@ async fn main() {
 
     let app_state = AppState {
         connection: Arc::new(Mutex::new(establish_connection())),
-        data: Arc::new(read_merged_data_from_file()),
+        data: Arc::new(read_merged_data_from_file(if !args.mock {
+            "merged_data"
+        } else {
+            "merged_data_mock"
+        })),
         holidays: Arc::new(
             serde_json::from_str(&std::fs::read_to_string("school_holidays.json").unwrap())
                 .unwrap(),
@@ -78,36 +82,34 @@ async fn main() {
         .route(
             "/",
             get(|| async {
-                "🚴‍♂️ Welcome to VELOVITE! 🌟
-You are on the API side of the project. 🌐
-You can, for example, hit: 
-🌦️ /weather_forecast 
-🚉 /stations 
-🔍 /search/:name 
-📊 /station/:id 
-🔮 and the most important: /predict 🔮
-Enjoy exploring our API! 🎉
-🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️
-🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟
-🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐
-🌦️🌦️🌦️🌦️🌦️🌦️🌦️🌦️🌦️🌦️
-🚉🚉🚉🚉🚉🚉🚉🚉🚉🚉
-🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍
-📊📊📊📊📊📊📊📊📊📊
-🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮
-🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉"
+                indoc! {"🚴‍♂️ Welcome to VELOVITE! 🌟
+                        You are on the API side of the project. 🌐
+                        You can, for example, hit: 
+                        🌦️ /weather_forecast 
+                        🚉 /stations 
+                        🔍 /search/:name 
+                        📊 /station/:id 
+                        🔮 and the most important: /predict 🔮
+                        Enjoy exploring our API! 🎉
+                        🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️
+                        🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟
+                        🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐
+                        🌦️🌦️🌦️🌦️🌦️🌦️🌦️🌦️🌦️🌦️
+                        🚉🚉🚉🚉🚉🚉🚉🚉🚉🚉
+                        🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍
+                        📊📊📊📊📊📊📊📊📊📊
+                        🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮
+                        🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉
+                        "}
             }),
         )
-        .route("/weather_forecast", get(get_weather_forecast))
-        .route("/stations", get(get_stations))
-        .route("/mock/stations", get(get_stations_mock()))
-        .route("/detailed_stations", get(get_detailed_stations))
-        .route("/mock/detailed_stations", get(get_detailed_stations_mock()))
-        .route("/station/:id", get(get_detailed_station))
-        .route("/search/:name", get(search_station))
-        .route("/predict", get(predict))
-        .with_state(app_state)
         .layer(CorsLayer::permissive());
+
+    let app = if args.mock {
+        app.merge(mock_router())
+    } else {
+        app.merge(normal_router(app_state))
+    };
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     tracing::info!("API Server is listening on port 8000");
@@ -126,4 +128,21 @@ pub fn establish_connection() -> PgConnection {
         .expect("Error applying pending migrations");
 
     connection
+}
+
+fn mock_router() -> Router {
+    Router::new()
+        .route("/detailed_stations", get(get_detailed_stations_mock()))
+        .route("/stations", get(get_stations_mock()))
+}
+
+fn normal_router(app_state: AppState) -> Router {
+    Router::new()
+        .route("/detailed_stations", get(get_detailed_stations))
+        .route("/weather_forecast", get(get_weather_forecast))
+        .route("/stations", get(get_stations))
+        .route("/station/:id", get(get_detailed_station))
+        .route("/search/:name", get(search_station))
+        .route("/predict", get(predict))
+        .with_state(app_state)
 }

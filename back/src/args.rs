@@ -7,7 +7,7 @@ pub struct Args {
     pub populate: bool,
     #[arg(long, default_value_t = false)]
     pub download_velov_data: bool,
-    #[arg(short = 'm', long, default_value_t = 100)]
+    #[arg(long, default_value_t = 100)]
     pub max_velov_features: u32,
     #[arg(short = 's', long, default_value_t = 1)]
     pub velov_start: u32,
@@ -18,4 +18,7 @@ pub struct Args {
     pub filter_velov_data: bool,
     #[arg(short = 'M', long, default_value_t = false)]
     pub merge_datas: bool,
+
+    #[arg(short, long, default_value_t = false)]
+    pub mock: bool,
 }

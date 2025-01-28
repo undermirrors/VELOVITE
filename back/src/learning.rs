@@ -10,7 +10,7 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::sync::{Arc, Mutex};
 
-pub fn merged_data() {
+pub fn merge_data() {
     info!("📥 Loading school holidays data..");
     let school_holidays: Vec<SchoolHolidays> = serde_json::from_str(
         &fs::read_to_string("school_holidays.json")
@@ -76,7 +76,7 @@ pub fn merged_data() {
     info!("🔄 Hashmapping the data");
 
     // merge the data per id in a hashmap
-    let hashmaped: HashMap<u32, Vec<MergedData>> =
+    let hashmapped: HashMap<u32, Vec<MergedData>> =
         merged.iter().fold(HashMap::new(), |mut acc, val| {
             acc.entry(val.id)
                 .and_modify(|v: &mut Vec<MergedData>| v.push(val.clone()))
@@ -86,7 +86,7 @@ pub fn merged_data() {
 
     info!("✅ Data merged!");
 
-    write_merged_data_to_file(hashmaped);
+    write_merged_data_to_file("merged_data", hashmapped);
 }
 
 pub fn filter_velov_data() {
@@ -205,10 +205,10 @@ pub fn filter_velov_data() {
     info!("✅ velov_training_data.json written!");
 }
 
-pub fn read_merged_data_from_file() -> HashMap<u32, Vec<MergedData>> {
+pub fn read_merged_data_from_file(path: &str) -> HashMap<u32, Vec<MergedData>> {
     info!("📖 Reading useful data from files..");
     // List all files in the directory
-    let mut files: Vec<_> = fs::read_dir("merged_data")
+    let mut files: Vec<_> = fs::read_dir(path)
         .unwrap()
         .map(|f| f.unwrap())
         .filter(|entry| entry.file_name() != ".gitkeep")
@@ -229,10 +229,10 @@ pub fn read_merged_data_from_file() -> HashMap<u32, Vec<MergedData>> {
     Arc::try_unwrap(data).unwrap().into_inner().unwrap()
 }
 
-fn write_merged_data_to_file(data: HashMap<u32, Vec<MergedData>>) {
+fn write_merged_data_to_file(path: &str, data: HashMap<u32, Vec<MergedData>>) {
     info!("✍️ Splitting data into files..");
     data.par_iter().for_each(|(key, value)| {
-        let file_path = format!("merged_data/{}.json", key);
+        let file_path = format!("{}/{}.json", path, key);
         let file = File::create(file_path).unwrap();
         let writer = BufWriter::new(file);
         serde_json::to_writer(writer, value).unwrap();

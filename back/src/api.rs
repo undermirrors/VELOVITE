@@ -10,6 +10,8 @@ use axum::response::IntoResponse;
 use axum::Json;
 use chrono::{Datelike, NaiveDateTime, Timelike};
 use diesel::{ExpressionMethods, PgTextExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
+use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
+use serde::Deserialize;
 use tracing::info;
 
 pub async fn get_weather_forecast() -> impl IntoResponse {
@@ -93,33 +95,61 @@ pub async fn search_station(
     }
 }
 
+#[derive(Deserialize)]
+pub struct PredictParams {
+    id: u32,
+    date: NaiveDateTime,
+}
+
 pub async fn predict(
     State(data): State<AppState>,
-    Query(id): Query<u32>,
-    Query(date): Query<NaiveDateTime>,
+    Query(params): Query<PredictParams>,
 ) -> impl IntoResponse {
     info!("🔍 Filter on the good station id");
-    let station_data = match data.data.get(&id) {
+    let station_data = match data.data.get(&params.id) {
         Some(data) => data,
         None => return (StatusCode::NOT_FOUND, "Station not found".to_owned()).into_response(),
     };
 
     let is_holidays = data
         .holidays
-        .iter()
-        .any(|holiday| date.date() >= holiday.start && date.date() <= holiday.end);
+        .par_iter()
+        .any(|holiday| params.date.date() >= holiday.start && params.date.date() <= holiday.end);
 
-    //todo!("use the weather prediction");
-    let precipitation = 12.0;
-    let temperature = 20.0;
-    let wind_speed = 10.0;
+    let forecast = download_weather_forecast().await.unwrap();
+    let now = chrono::Utc::now().naive_utc();
+    if params.date < now {
+        match station_data.par_iter().find_first(|d| {
+            d.month == params.date.month()
+                && d.day == params.date.day()
+                && d.hour == params.date.hour()
+                && d.week_day == params.date.weekday().num_days_from_monday()
+        }) {
+            Some(data) => {
+                return (StatusCode::OK, Json(data)).into_response();
+            }
+            None => {
+                return (StatusCode::NOT_FOUND, "Data not found".to_owned()).into_response();
+            }
+        }
+    }
+
+    let weather_data = match forecast.get(&params.date.and_utc()) {
+        Some(data) => data,
+        None => {
+            return (StatusCode::NOT_FOUND, "Weather data not found".to_owned()).into_response();
+        }
+    };
+    let precipitation = weather_data.precipitation;
+    let temperature = weather_data.temperature_2m;
+    let wind_speed = weather_data.wind_speed_10m;
 
     let mut wanted_point = MergedData {
-        id,
-        hour: date.time().hour(),
-        day: date.day(),
-        month: date.month(),
-        week_day: date.weekday().num_days_from_monday(),
+        id: params.id,
+        hour: params.date.time().hour(),
+        day: params.date.day(),
+        month: params.date.month(),
+        week_day: params.date.weekday().num_days_from_monday(),
         holidays: is_holidays,
         free_stands: 0,
         available_bikes: 0,
@@ -128,7 +158,7 @@ pub async fn predict(
         wind_speed,
     };
 
-    let nearest_data = station_data.iter().min_by(|a, b| {
+    let nearest_data = station_data.par_iter().min_by(|a, b| {
         distance(a, &wanted_point)
             .partial_cmp(&distance(b, &wanted_point))
             .unwrap()

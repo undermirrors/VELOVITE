@@ -43,10 +43,17 @@
 </script>
 
 <style>
+
     div {
-        height: 100%;
+        height: 100vh;
+        width: 100vw;
+        align-self: center ;
         font-family:Verdana, Tahoma, sans-serif;
-        position: relative; /* Nécessaire pour créer un contexte de positionnement */
+        position: relative;
+    }
+
+    map {
+
     }
 
     .overlay {
@@ -155,7 +162,8 @@
         class="overlay overlay-logo"/>
         
     
-
+    <map>
     <LeafletMap />
+    </map>
 </div>
 

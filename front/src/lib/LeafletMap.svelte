@@ -57,7 +57,7 @@
 
 <style>
     #map {
-        height: 600px;
+        height: 100vh;
         width: 100%;
     }
 </style>

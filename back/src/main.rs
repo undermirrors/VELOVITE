@@ -75,7 +75,29 @@ async fn main() {
     }
 
     let app = Router::new()
-        .route("/", get(|| async { "Hello, world!" }))
+        .route(
+            "/",
+            get(|| async {
+                "🚴‍♂️ Welcome to VELOVITE! 🌟
+You are on the API side of the project. 🌐
+You can, for example, hit: 
+🌦️ /weather_forecast 
+🚉 /stations 
+🔍 /search/:name 
+📊 /station/:id 
+🔮 and the most important: /predict 🔮
+Enjoy exploring our API! 🎉
+🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️🚴‍♂️🚴‍♀️
+🌟🌟🌟🌟🌟🌟🌟🌟🌟🌟
+🌐🌐🌐🌐🌐🌐🌐🌐🌐🌐
+🌦️🌦️🌦️🌦️🌦️🌦️🌦️🌦️🌦️🌦️
+🚉🚉🚉🚉🚉🚉🚉🚉🚉🚉
+🔍🔍🔍🔍🔍🔍🔍🔍🔍🔍
+📊📊📊📊📊📊📊📊📊📊
+🔮🔮🔮🔮🔮🔮🔮🔮🔮🔮
+🎉🎉🎉🎉🎉🎉🎉🎉🎉🎉"
+            }),
+        )
         .route("/weather_forecast", get(get_weather_forecast))
         .route("/stations", get(get_stations))
         .route("/mock/stations", get(get_stations_mock()))

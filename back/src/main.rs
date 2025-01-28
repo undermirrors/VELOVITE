@@ -19,6 +19,7 @@ use learning::{
     filter_velov_data, merge_data, read_merged_data_from_file, MergedData, SchoolHolidays,
 };
 use tower_http::cors::CorsLayer;
+use tracing::info;
 
 use crate::api::{get_detailed_station, get_stations, search_station};
 use crate::mock::{get_detailed_stations_mock, get_stations_mock};
@@ -59,6 +60,12 @@ async fn main() {
     if args.download_velov_data {
         download_velov(args.max_velov_features, args.velov_start).await;
         return;
+    }
+
+    if args.mock {
+        info!("🚀 Running in mock mode!");
+    } else {
+        info!("🌐 Running in normal mode!");
     }
 
     let app_state = AppState {

@@ -5,14 +5,14 @@ use lazy_static::lazy_static;
 lazy_static! {
     static ref STATIONS_MOCK: [BasicStation; 2] = [
         BasicStation {
-            id: 0,
-            latitude: 26.0,
-            longitude: 72.0,
+            id: 7055,
+            latitude: 45.74676623,
+            longitude: 4.8420507,
         },
         BasicStation {
-            id: 1,
-            latitude: 4.0,
-            longitude: 12.0,
+            id: 8052,
+            latitude: 45.74708261,
+            longitude: 4.86019085,
         }
     ];
 }
@@ -20,22 +20,22 @@ lazy_static! {
 lazy_static! {
     static ref DETAILED_STATIONS_MOCK: [DetailedStation; 2] = [
         DetailedStation {
-            id: 0,
+            id: 7055,
             name: "oui".to_string(),
-            latitude: 26.0,
-            longitude: 72.0,
+            latitude: 45.74676623,
+            longitude: 4.8420507,
             adress: "oui adresse".to_string(),
             area: "oui area".to_string(),
-            capacity: 5,
+            capacity: 16,
         },
         DetailedStation {
-            id: 1,
+            id: 8052,
             name: "non".to_string(),
-            latitude: 4.0,
-            longitude: 12.0,
+            latitude: 45.74708261,
+            longitude: 4.86019085,
             adress: "non adresse".to_string(),
             area: "non area".to_string(),
-            capacity: 10,
+            capacity: 16,
         }
     ];
 }

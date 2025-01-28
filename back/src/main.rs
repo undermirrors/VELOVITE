@@ -18,6 +18,7 @@ use indoc::indoc;
 use learning::{
     filter_velov_data, merge_data, read_merged_data_from_file, MergedData, SchoolHolidays,
 };
+use tokio::signal;
 use tower_http::cors::CorsLayer;
 use tracing::info;
 
@@ -125,7 +126,10 @@ async fn main() {
 
     let listener = tokio::net::TcpListener::bind("0.0.0.0:8000").await.unwrap();
     tracing::info!("API Server is listening on port 8000");
-    axum::serve(listener, app).await.unwrap();
+    axum::serve(listener, app)
+        .with_graceful_shutdown(shutdown_signal())
+        .await
+        .unwrap();
 }
 
 pub fn establish_connection() -> PgConnection {
@@ -140,6 +144,34 @@ pub fn establish_connection() -> PgConnection {
         .expect("Error applying pending migrations");
 
     connection
+}
+
+async fn shutdown_signal() {
+    let ctrl_c = async {
+        signal::ctrl_c()
+            .await
+            .expect("Failed to listen for Ctrl+C/SIGINT");
+    };
+
+    #[cfg(unix)]
+    let terminate = async {
+        signal::unix::signal(signal::unix::SignalKind::terminate())
+            .expect("Failed to listen for SIGTERM")
+            .recv()
+            .await;
+    };
+
+    #[cfg(not(unix))]
+    let terminate = std::future::pending::<()>();
+
+    tokio::select! {
+        _ = ctrl_c => {
+            tracing::info!("Ctrl-C received, shutting down");
+        }
+        _ = terminate => {
+            tracing::info!("SIGTERM received, shutting down");
+        }
+    }
 }
 
 fn mock_router() -> Router {

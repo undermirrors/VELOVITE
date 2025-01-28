@@ -1,7 +1,7 @@
 <script lang="ts">
     import 'leaflet/dist/leaflet.css';
     import {onMount} from 'svelte';
-    import {getTables, getWeatherForecast} from '$lib/rust_api';
+    import {getDetailsById, getTables, getWeatherForecast} from '$lib/rust_api';
 
 
     let mapContainer: string | HTMLElement;
@@ -23,8 +23,9 @@
             constructor(id: number, latitude: number, longitude: number) {
                 this.id = id;
                 const blackIcon = new Icon();
-                this.marker = L.marker([latitude, longitude], {icon: blackIcon}).addEventListener('click', () => {
-                    console.log(this.id);
+                this.marker = L.marker([latitude, longitude], {icon: blackIcon}).addEventListener('click', async () => {
+                    let advanced_data = await getDetailsById(this.id);
+                    console.log(advanced_data);
                 });
             }
 
@@ -48,8 +49,7 @@
         markers.forEach(marker => marker.getMarker().addTo(map));
 
         let meteo: Map<string, WeatherForecast> = await getWeatherForecast();
-
-        console.log(meteo['2025-01-27T00:00:00Z']);
+        console.log(meteo.get("2025-01-27T00:00:00Z"));
     });
 </script>
 
@@ -58,6 +58,6 @@
 <style>
     #map {
         height: 100vh;
-        width: 100%;
+        width: 100vw;
     }
 </style>

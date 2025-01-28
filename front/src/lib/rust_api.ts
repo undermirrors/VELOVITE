@@ -3,7 +3,7 @@ let url_mock = 'http://localhost:8000/mock/';
 
 export async function getWeatherForecast(): Promise<Map<string, WeatherForecast>> {
     const response = await fetch(url + 'weather_forecast');
-    return await response.json();
+    return new Map(Object.entries(await response.json()));
 }
 
 export async function getTables(): Promise<Table[]> {

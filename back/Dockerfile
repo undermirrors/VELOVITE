@@ -2,7 +2,7 @@
 FROM rust:latest
 
 # Set the working directory
-WORKDIR /usr/src/myapp
+WORKDIR /usr/src/velovite-back
 
 # Copy the current directory contents into the container
 COPY . .

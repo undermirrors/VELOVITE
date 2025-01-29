@@ -73,6 +73,10 @@ async fn main() {
         return;
     }
 
+    if args.populate {
+        populate().await;
+    }
+
     if args.mock {
         info!("🚀 Running in mock mode!");
     } else {
@@ -91,10 +95,6 @@ async fn main() {
                 .unwrap(),
         ),
     };
-
-    if args.populate {
-        populate().await;
-    }
 
     let app = Router::new()
         .route(

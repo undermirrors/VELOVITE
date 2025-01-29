@@ -1,3 +1,5 @@
+use std::collections::HashMap;
+
 use crate::downloader::download_weather_forecast;
 use crate::learning::MergedData;
 use crate::models::BasicStation;
@@ -238,16 +240,19 @@ pub async fn predictions(
         })
         .collect();
 
-    let response_data: Vec<AvailabilityData> = generated_data
-        .par_iter()
-        .filter_map(|data| {
-            data.as_ref().map(|nearest| AvailabilityData {
-                id: nearest.id,
-                available_bikes: nearest.available_bikes,
-                free_stands: nearest.free_stands,
-            })
-        })
-        .collect();
+    let mut response_data: HashMap<u32, AvailabilityData> = HashMap::new();
+    generated_data.iter().for_each(|data| {
+        if let Some(nearest) = data.as_ref() {
+            response_data.insert(
+                nearest.id,
+                AvailabilityData {
+                    id: nearest.id,
+                    available_bikes: nearest.available_bikes,
+                    free_stands: nearest.free_stands,
+                },
+            );
+        }
+    });
 
     if response_data.is_empty() {
         return (StatusCode::NOT_FOUND, "No data found".to_owned()).into_response();

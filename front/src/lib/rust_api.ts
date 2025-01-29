@@ -1,8 +1,7 @@
 import type {CustomMarkers} from "$lib/CustomMarkers";
 import {date, markers} from "$lib/store";
 
-let url = 'http://localhost:8000/';
-let url_mock = 'http://localhost:8000/mock/';
+const url = 'http://localhost:8000/';
 
 export async function getWeatherForecast(): Promise<Map<string, WeatherForecast> | null> {
     console.log('Fetching weather forecast');
@@ -34,7 +33,7 @@ export async function getDetailsById(id: number): Promise<Details> {
     return await response.json();
 }
 
-export async function getAllPredictions(date: string): Promise<Prediction[] | null> {
+export async function getAllPredictions(date: string): Promise<Map<number, Prediction> | null> {
     date = date.replaceAll(':', '%3A');
     date = date.replaceAll('Z', '');
     let response;
@@ -48,7 +47,8 @@ export async function getAllPredictions(date: string): Promise<Prediction[] | nu
         console.error('Error fetching prediction:', error);
         return null;
     }
-    return await response.json();
+    const entries: [number, Prediction][] = Object.entries(await response.json()).map(([key, value]) => [Number(key), value as Prediction]);
+    return new Map<number, Prediction>(entries);
 }
 
 export async function getPredict(id: number, date: string): Promise<Prediction | null> {
@@ -83,7 +83,7 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     let markersList: CustomMarkers[] = [];
     markers.subscribe(value => markersList = value)();
 
-    let predictions = await getAllPredictions(date_value);
+    const predictions = await getAllPredictions(date_value);
     if (predictions === null) {
         for (const marker of markersList) {
             marker.changeColor('black');
@@ -94,7 +94,7 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     for (const marker of markersList) {
         if (date_value >= new Date().toISOString()) {
             id = marker.getId();
-            let val = await getRatio(id, predictions);
+            const val = await getRatio(id, predictions);
             if (val === -1) {
                 color = 'black';
             } else {
@@ -111,14 +111,14 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     return markersList;
 }
 
-async function getRatio(id: number, predictions: Prediction[]): Promise<number> {
-    let data1 = predictions.find(element => element.id === id);
-    if (data1 === undefined) {
+async function getRatio(id: number, predictions: Map<number, Prediction>): Promise<number> {
+    const data = predictions.get(id);
+    if (data === undefined) {
         return -1;
     }
-    let data2 = await getDetailsById(id);
+    const data2 = await getDetailsById(id);
     if (data2.capacity === 0) {
         return 0;
     }
-    return data1.available_bikes / data2.capacity;
+    return data.available_bikes / data2.capacity;
 }

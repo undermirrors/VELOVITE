@@ -1,8 +1,9 @@
 <script lang="ts">
     import 'leaflet/dist/leaflet.css';
     import {onMount} from 'svelte';
-    import {getStations, setMarkerColor} from '$lib/rust_api';
-    import {mapContainerStored, markers} from '$lib/store';
+    import {getMarkersFromSearch, getStations, setMarkerColor} from '$lib/rust_api';
+    import {mapContainerStored, markers, research} from '$lib/store';
+    import type {CustomMarkers} from "$lib/CustomMarkers";
 
     let mapContainer: HTMLElement | null = null;
 
@@ -21,8 +22,17 @@
                 '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-        // We get the stations from the API and create a marker for each one
-        let marker = (await getStations()).map(table => new CustomMarkers.CustomMarkers(table.id, table.latitude, table.longitude));
+
+        let marker: CustomMarkers[] = [];
+        let search = '';
+        research.subscribe(value => search = value)();
+        if (search == '') {
+            marker = (await getStations()).map(table => new CustomMarkers.CustomMarkers(table.id, table.latitude, table.longitude));
+        } else {
+            marker = (await getMarkersFromSearch(search)).map(table => new CustomMarkers.CustomMarkers(table.id, table.latitude, table.longitude));
+        }
+
+        // We get the tables from the API and create a marker for each one
         markers.set(marker);
 
         // Now markers are stored, we can set the color of each marker

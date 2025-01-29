@@ -6,3 +6,5 @@ export const date = writable<string>(new Date().toISOString());
 export const markers = writable<CustomMarkers[]>([]);
 
 export const mapContainerStored = writable<HTMLElement | null>(null);
+
+export const research = writable<string>('');

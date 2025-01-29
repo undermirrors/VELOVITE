@@ -18,6 +18,11 @@ export async function getWeatherForecast(): Promise<Map<string, WeatherForecast>
     }
 }
 
+export async function getMarkersFromSearch(search: string): Promise<Station[]> {
+    const response = await fetch(url + 'search/' + search);
+    return await response.json();
+}
+
 export async function getStations(): Promise<Station[]> {
     const response = await fetch(url + 'stations');
     return await response.json();

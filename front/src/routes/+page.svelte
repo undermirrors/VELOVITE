@@ -2,7 +2,7 @@
     import {onMount} from 'svelte';
     import LeafletMap from '$lib/LeafletMap.svelte';
     import {getWeatherForecast} from '$lib/rust_api';
-    import {date} from '$lib/store';
+    import {date, research} from '$lib/store';
 
     let mapKey = 0; // Force re-rendering of the map
     async function updateDate(selectedDate: string) {
@@ -24,6 +24,11 @@
         date.subscribe(value => selectedJour = value.split('T')[0])();
         let res = selectedJour + 'T' + hours + ':00:00.000Z';
         date.set(res);
+        mapKey++;
+    }
+
+    function updateEntries(value: string) {
+        research.set(value);
         mapKey++;
     }
 
@@ -162,9 +167,12 @@
             id="adress"
             name="adress"
             placeholder="Adresse"
+            on:change={e => {
+                if (e.target instanceof HTMLInputElement) {
+                    updateEntries(e.target.value);
+                }
+            }}
     />
-
-    <div class="overlay overlay-stations">Stations proches</div>
 
     <img src={src_img} alt="Meteo" class="overlay overlay-meteo"/>
 
@@ -264,12 +272,4 @@
         width: 150px;
     }
 
-    .overlay-stations {
-        top: 28%;
-        left: 2%;
-        padding: 10px;
-        border-radius: 20px;
-        height: 200px;
-        width: 150px;
-    }
 </style>

@@ -6,7 +6,6 @@
 
 	// Force re-rendering of the map and the weather icon
 	let mapKey = 0;
-	let weatherKey = 0;
 
 	/**
 	 * Update date and time selected by user,
@@ -92,8 +91,7 @@
 	let meteo = -1;
 	let src_img = '';
 
-	// onMount is a lifecycle function that is called when the component is mounted to the DOM
-	onMount(async () => {
+	async function updateWeather() {
 		let global_meteo = await getWeatherForecast();
 		if (global_meteo === null) {
 			temp = '?';
@@ -102,9 +100,6 @@
 			let date2 = new Date();
 			date.subscribe((value) => (date2 = value))();
 			let dateStr = `${date2.getFullYear()}-${String(date2.getMonth() + 1).padStart(2, '0')}-${String(date2.getDate()).padStart(2, '0')}T${String(date2.getHours()).padStart(2, '0')}:00:00Z`;
-			console.log('dateSTR: ', dateStr);
-			console.log('global_meteo: ', global_meteo.keys());
-
 			temp = String(global_meteo.get(dateStr)?.temperature_2m);
 			meteo = Number(global_meteo.get(dateStr)?.weather_code);
 		}
@@ -137,6 +132,11 @@
 		} else {
 			src_img = '/meteo/interdit.png';
 		}
+	}
+
+	// onMount is a lifecycle function that is called when the component is mounted to the DOM
+	onMount(async () => {
+		await updateWeather();
 	});
 	console.log(meteo);
 
@@ -175,6 +175,8 @@
 					dateJour = new Date(e.target.value);
 					updateJour(dateJour);
 				}
+
+				updateWeather();
 			}
 		}}
 	/>
@@ -192,6 +194,7 @@
 			if (e.target instanceof HTMLInputElement) {
 				hoursAndMinutes = e.target.value;
 				updateHour(Number(hoursAndMinutes.split(':')[0]));
+				updateWeather();
 			}
 		}}
 	/>

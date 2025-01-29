@@ -48,7 +48,7 @@
     let temp = '';
     let meteo = -1;
 
-    let src_img;
+    let src_img = '';
 
     onMount(async () => {
         let global_meteo = await getWeatherForecast();

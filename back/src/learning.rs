@@ -1,6 +1,9 @@
 use crate::downloader::{Value, WeatherData};
+use crate::utils::distance;
 use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc};
 use log::info;
+use rand::rng;
+use rand::seq::SliceRandom;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rayon::prelude::ParallelBridge;
 use serde::{Deserialize, Serialize};
@@ -10,18 +13,167 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::sync::{Arc, Mutex};
 
+const BENCHMARK_PERCENTAGE: f32 = 20.0;
+
+pub fn benchmark() {
+    let mut data = read_merged_data_from_file("merged_data");
+
+    info!(
+        "🗑️ Removing {}% of the data of each station..",
+        BENCHMARK_PERCENTAGE
+    );
+    let mut removed_data: HashMap<u32, Vec<MergedData>> = HashMap::new();
+
+    let mut len_removed = 0;
+    for (key, value) in data.iter_mut() {
+        value.shuffle(&mut rng());
+        let len = value.len();
+        let to_remove = (len as f32 * BENCHMARK_PERCENTAGE / 100.0) as usize;
+        removed_data.insert(*key, value.split_off(len - to_remove));
+        value.truncate(len - to_remove);
+        len_removed = to_remove;
+    }
+    info!(
+        "🗑️ Removed {}% of the data of each station!",
+        BENCHMARK_PERCENTAGE
+    );
+    //display the length of the removed data
+    info!("📊 Removed data length :{}", len_removed);
+
+    info!("📊 Benchmarking..");
+    let result: HashMap<u32, Vec<u32>> = data
+        .par_iter()
+        .map(|(key, value)| {
+            info!("🔍 Benchmarking station {}..", key);
+            let station_result: Vec<u32> = removed_data
+                .get(key)
+                .unwrap()
+                .par_iter()
+                .map(|wanted| {
+                    let wanted_point = MergedData {
+                        id: wanted.id,
+                        hour: wanted.hour,
+                        day: wanted.day,
+                        month: wanted.month,
+                        week_day: wanted.week_day,
+                        holidays: wanted.holidays,
+                        free_stands: wanted.free_stands,
+                        available_bikes: wanted.available_bikes,
+                        precipitation: wanted.precipitation,
+                        temperature: wanted.temperature,
+                        wind_speed: wanted.wind_speed,
+                    };
+
+                    let nearest_data = value
+                        .par_iter()
+                        .min_by(|a, b| {
+                            distance(a, &wanted_point)
+                                .partial_cmp(&distance(b, &wanted_point))
+                                .unwrap()
+                        })
+                        .unwrap();
+
+                    (nearest_data.available_bikes).abs_diff(wanted_point.available_bikes)
+                })
+                .collect();
+
+            (*key, station_result)
+        })
+        .collect();
+    info!("✅ Benchmark done!");
+
+    info!("📊 Results :");
+    // Display for each station, the average, the median, the min and the max of the distance
+    // then the average of all the stations
+    let mut total = 0;
+    let mut total_len = 0;
+    let mut all_distances: Vec<u32> = Vec::new();
+
+    let mut wtr = csv::Writer::from_path("benchmark_results.csv").unwrap();
+    wtr.write_record(["Station ID", "Average", "Median", "Min", "Max"])
+        .unwrap();
+
+    for (key, value) in result.iter() {
+        if value.is_empty() {
+            continue;
+        }
+        let average = value.iter().sum::<u32>() as f32 / value.len() as f32;
+        let median = {
+            let mut sorted = value.clone();
+            sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            let len = sorted.len();
+            if len % 2 == 0 {
+                (sorted[len / 2] + sorted[len / 2 - 1]) as f32 / 2.0
+            } else {
+                sorted[len / 2] as f32
+            }
+        };
+        let min = value
+            .iter()
+            .min_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+        let max = value
+            .iter()
+            .max_by(|a, b| a.partial_cmp(b).unwrap())
+            .unwrap();
+
+        info!(
+            "🆔 {} : Average : {} Median : {} Min : {} Max : {}",
+            key, average, median, min, max
+        );
+
+        wtr.write_record(&[
+            key.to_string(),
+            average.to_string(),
+            median.to_string(),
+            min.to_string(),
+            max.to_string(),
+        ])
+        .unwrap();
+
+        total += value.iter().sum::<u32>();
+        total_len += value.len();
+        all_distances.extend(value);
+    }
+
+    wtr.flush().unwrap();
+
+    let average = total as f32 / total_len as f32;
+    let main_median = {
+        all_distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        let len = all_distances.len();
+        if len % 2 == 0 {
+            (all_distances[len / 2] + all_distances[len / 2 - 1]) as f32 / 2.0
+        } else {
+            all_distances[len / 2] as f32
+        }
+    };
+    let main_min = all_distances
+        .iter()
+        .min_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap();
+    let main_max = all_distances
+        .iter()
+        .max_by(|a, b| a.partial_cmp(b).unwrap())
+        .unwrap();
+
+    info!("📊 Average of all stations : {}", average);
+    info!("📊 Median of all stations : {}", main_median);
+    info!("📊 Min of all stations : {}", main_min);
+    info!("📊 Max of all stations : {}", main_max);
+}
 /// Merges the Velov, weather, and school holidays data into a single dataset. and writes it to a file.
-/// 
+///
 /// # Returns
-/// 
+///
 /// * nothing
-/// 
+///
 /// # Panics
-/// 
+///
 /// Panics if the weather data is missing for a given date.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```rust
 /// merge_data();
 /// ```
@@ -105,13 +257,13 @@ pub fn merge_data() {
 }
 
 /// Filters the Velov data to keep only the useful data and writes it to a file.
-/// 
+///
 /// # Returns
-/// 
+///
 /// * nothing
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```rust
 /// filter_velov_data();
 /// ```
@@ -232,17 +384,17 @@ pub fn filter_velov_data() {
 }
 
 /// Reads the merged data from the files and returns it as a hashmap.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `path` - The path to the directory containing the files.
-/// 
+///
 /// # Returns
-/// 
+///
 /// * A hashmap containing the merged data.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```rust
 /// let data = read_merged_data_from_file("merged_data");
 /// ```
@@ -271,17 +423,17 @@ pub fn read_merged_data_from_file(path: &str) -> HashMap<u32, Vec<MergedData>> {
 }
 
 /// Writes the merged data to files.
-/// 
+///
 /// # Arguments
-/// 
+///
 /// * `path` - The path to the directory where the files will be written.
-/// 
+///
 /// # Returns
-/// 
+///
 /// * nothing
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```rust
 /// write_merged_data_to_file("merged_data", data);
 /// ```
@@ -297,17 +449,17 @@ fn write_merged_data_to_file(path: &str, data: HashMap<u32, Vec<MergedData>>) {
 }
 
 /// Data structure representing the availability of bikes and free stands at a station.
-/// 
+///
 /// # Fields
-/// 
+///
 /// * `id` - The ID of the station.
 /// * `date` - The date and time of the data.
 /// * `capacity` - The total capacity of the station.
 /// * `bikes` - The number of available bikes.
 /// * `stands` - The number of free stands.
-/// 
+///
 /// # Examples
-/// 
+///
 /// ```rust
 /// let data = UsefulData {
 ///    id: 1,
@@ -327,9 +479,9 @@ struct UsefulData {
 }
 
 /// Data structure representing the availability of bikes and free stands at a station.
-/// 
+///
 /// # Fields
-/// 
+///
 /// * `id` - The ID of the station.
 /// * `hour` - The hour of the data.
 /// * `day` - The day of the data.
@@ -357,9 +509,9 @@ pub struct MergedData {
 }
 
 /// Data structure representing the school holidays.
-/// 
+///
 /// # Fields
-/// 
+///
 /// * `start` - The start date of the holidays.
 /// * `end` - The end date of the holidays.
 #[derive(Debug, Serialize, Deserialize, Clone)]

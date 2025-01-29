@@ -30,12 +30,18 @@ const DAY_COEF: f32 = 1.0;
 const TEMPERATURE_COEF: f32 = 1.0;
 const PRECIPITATION_COEF: f32 = 1.0;
 const WIND_SPEED_COEF: f32 = 1.0;
+const MONTH_COEF: f32 = 1.0;
+const WEEK_DAY_COEF: f32 = 1.0;
+const HOLIDAYS_COEF: f32 = 1.0;
 
 pub fn distance(a: &MergedData, b: &MergedData) -> f32 {
     ((HOUR_COEF * ((a.hour - b.hour) as f32 / 24.0).powf(2.0))
         + (DAY_COEF * ((a.day - b.day) as f32 / 7.0).powf(2.0))
         + (TEMPERATURE_COEF * ((a.temperature - b.temperature) / 40.0).powf(2.0))
         + (PRECIPITATION_COEF * ((a.precipitation - b.precipitation) / 100.0).powf(2.0))
-        + (WIND_SPEED_COEF * ((a.wind_speed - b.wind_speed) / 100.0).powf(2.0)))
+        + (WIND_SPEED_COEF * ((a.wind_speed - b.wind_speed) / 100.0).powf(2.0))
+        + (MONTH_COEF * ((a.month - b.month) as f32 / 12.0).powf(2.0))
+        + (WEEK_DAY_COEF * ((a.week_day - b.week_day) as f32 / 7.0).powf(2.0))
+        + (HOLIDAYS_COEF * ((a.holidays as i32 - b.holidays as i32) as f32 / 1.0).powf(2.0)))
     .sqrt()
 }

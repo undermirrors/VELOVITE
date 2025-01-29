@@ -33,4 +33,6 @@ pub struct Args {
 
     #[arg(short, long, default_value_t = false)]
     pub mock: bool,
+    #[arg(short, long, default_value_t = false)]
+    pub benchmark: bool,
 }

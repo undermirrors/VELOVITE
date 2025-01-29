@@ -16,7 +16,8 @@ use clap::Parser;
 use downloader::{download_velov, download_weather};
 use indoc::indoc;
 use learning::{
-    filter_velov_data, merge_data, read_merged_data_from_file, MergedData, SchoolHolidays,
+    benchmark, filter_velov_data, merge_data, read_merged_data_from_file, MergedData,
+    SchoolHolidays,
 };
 use mock::get_detailed_station_mock;
 use tokio::signal;
@@ -55,6 +56,10 @@ async fn main() {
     tracing_subscriber::fmt::init();
     let args = Args::parse();
 
+    if args.benchmark {
+        benchmark();
+        return;
+    }
     if args.filter_velov_data {
         filter_velov_data();
         return;

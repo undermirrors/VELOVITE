@@ -156,6 +156,16 @@ pub struct PredictParams {
     date: NaiveDateTime,
 }
 
+/// Parameters for the `predict` function, including station ID and date.
+///
+/// # Fields
+///
+/// * `date` - The date and time for which to predict availability.
+#[derive(Deserialize)]
+pub struct PredictionsParams {
+    date: NaiveDateTime,
+}
+
 /// Data structure representing the availability of bikes and free stands at a station.
 ///
 /// # Fields
@@ -168,6 +178,82 @@ pub struct AvailabilityData {
     id: u32,
     free_stands: u32,
     available_bikes: u32,
+}
+
+pub async fn predictions(
+    State(data): State<AppState>,
+    Query(params): Query<PredictionsParams>,
+) -> impl IntoResponse {
+    let is_holidays = data
+        .holidays
+        .par_iter()
+        .any(|holiday| params.date.date() >= holiday.start && params.date.date() <= holiday.end);
+
+    let forecast = download_weather_forecast().await.unwrap();
+    let now = chrono::Utc::now().naive_utc();
+    let weather_data = match forecast.get(&params.date.and_utc()) {
+        Some(data) => data,
+        None => {
+            return (StatusCode::NOT_FOUND, "Weather data not found".to_owned()).into_response();
+        }
+    };
+    let precipitation = weather_data.precipitation;
+    let temperature = weather_data.temperature_2m;
+    let wind_speed = weather_data.wind_speed_10m;
+
+    let generated_data: Vec<Option<&MergedData>> = data
+        .data
+        .par_iter()
+        .map(|(_, station_data)| {
+            if params.date < now {
+                station_data.par_iter().find_first(|d| {
+                    d.month == params.date.month()
+                        && d.day == params.date.day()
+                        && d.hour == params.date.hour()
+                        && d.week_day == params.date.weekday().num_days_from_monday()
+                })
+            } else {
+                let wanted_point = MergedData {
+                    id: station_data.first().unwrap().id,
+                    hour: params.date.time().hour(),
+                    day: params.date.day(),
+                    month: params.date.month(),
+                    week_day: params.date.weekday().num_days_from_monday(),
+                    holidays: is_holidays,
+                    free_stands: 0,
+                    available_bikes: 0,
+                    precipitation,
+                    temperature,
+                    wind_speed,
+                };
+
+                let nearest_data = station_data.par_iter().min_by(|a, b| {
+                    distance(a, &wanted_point)
+                        .partial_cmp(&distance(b, &wanted_point))
+                        .unwrap()
+                });
+
+                nearest_data
+            }
+        })
+        .collect();
+
+    let response_data: Vec<AvailabilityData> = generated_data
+        .par_iter()
+        .filter_map(|data| {
+            data.as_ref().map(|nearest| AvailabilityData {
+                id: nearest.id,
+                available_bikes: nearest.available_bikes,
+                free_stands: nearest.free_stands,
+            })
+        })
+        .collect();
+
+    if response_data.is_empty() {
+        return (StatusCode::NOT_FOUND, "No data found".to_owned()).into_response();
+    }
+
+    (StatusCode::OK, Json(response_data)).into_response()
 }
 
 /// Predicts the availability of bikes and free stands at a station for a given date and time.

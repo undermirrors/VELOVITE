@@ -8,7 +8,7 @@ mod populate;
 mod schema;
 mod utils;
 
-use api::{get_detailed_stations, get_weather_forecast, predict};
+use api::{get_detailed_stations, get_weather_forecast, predict, predictions};
 use args::Args;
 use axum::routing::get;
 use axum::Router;
@@ -124,6 +124,7 @@ async fn main() {
         .route("/station/:id", get(get_detailed_station))
         .route("/search/:name", get(search_station))
         .route("/predict", get(predict))
+        .route("/predictions", get(predictions))
         .with_state(app_state.clone())
         .layer(CorsLayer::permissive());
 

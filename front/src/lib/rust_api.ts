@@ -131,7 +131,7 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     date_value.setSeconds(0);
 
     // to format the date in the correct format
-    let dateStr = date_value.toLocaleString('sv-SE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(' ', 'T');
+    const dateStr = date_value.toLocaleString('sv-SE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(' ', 'T');
 
     let color: string = 'black';
     let markersList: CustomMarkers[] = [];

@@ -18,7 +18,11 @@ export class CustomMarkers {
             let advanced_data = await getDetailsById(this.id);
             console.log(advanced_data);
         });
+        this.marker.bindPopup("<h3>Nom de la station</h3><p>10%</p>");
+        this.marker.bindTooltip("station");
     }
+
+   
 
     getMarker() {
         return this.marker;

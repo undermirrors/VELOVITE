@@ -147,7 +147,9 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     }
 
     for (const marker of markersList) {
-        if (date_value >= new Date()) {
+        let basicDate = new Date();
+        basicDate.setHours(0, 0, 0, 0);
+        if (date_value >= basicDate) {
             id = marker.getId();
             const val = await getRatio(id, predictions, details);
             if (val === -1) {

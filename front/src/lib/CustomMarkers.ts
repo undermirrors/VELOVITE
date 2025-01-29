@@ -125,7 +125,9 @@ export class CustomMarkers {
         let selected_date: Date = new Date(0, 1, 1); // Initialised to avoid confusion
         date.subscribe(value => selected_date = value)();
 
-        if (selected_date >= new Date()) {
+        let basicDate = new Date();
+        basicDate.setHours(0, 0, 0, 0);
+        if (selected_date >= basicDate) {
             // We do some date manipulation to get the next hour with minutes and seconds set to 0
             selected_date.setHours(selected_date.getHours() + 1);
             selected_date.setMinutes(0);

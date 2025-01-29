@@ -199,8 +199,8 @@
         border-style: none;
         border-color: grey;
         font-size: medium;
-        z-index: 999; /* Plus élevé que la carte */
-        background-color: rgba(255, 255, 255, 1); /* Optionnel : un fond pour plus de lisibilité */
+        z-index: 999; /* ensure the overlay is above the map */
+        background-color: rgba(255, 255, 255, 1); /* Optional : background for better readability */
         padding: 5px;
         border-radius: 60px;
         height: 60px;

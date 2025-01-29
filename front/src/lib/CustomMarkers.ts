@@ -34,7 +34,7 @@ export class CustomMarkers {
         this.id = id;
         this.marker = L.marker([latitude, longitude], {icon: new CustomIcon()}).addEventListener('click', async () => {
             // We get the details for the selected station
-            let advanced_data = await getDetailsById(this.id);
+            const advanced_data = await getDetailsById(this.id);
 
             // We get the selected date from the store
             let selected_date: string = '';
@@ -53,7 +53,7 @@ export class CustomMarkers {
                 date_id = date_id.replaceAll(".000Z", "Z");
 
                 // We get the prediction for the selected date
-                let predicted_data = await getPredict(this.id, date_id);
+                const predicted_data = await getPredict(this.id, date_id);
 
                 console.log(date_id)
                 console.log(predicted_data);

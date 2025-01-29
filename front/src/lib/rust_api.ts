@@ -18,7 +18,7 @@ export async function getWeatherForecast(): Promise<Map<string, WeatherForecast>
     }
 }
 
-export async function getTables(): Promise<Table[]> {
+export async function getStations(): Promise<Station[]> {
     const response = await fetch(url + 'stations');
     return await response.json();
 }

@@ -12,7 +12,7 @@ interface Prediction {
     available_bikes: number;
 }
 
-interface Table {
+interface Station {
     id: number;
     latitude: number;
     longitude: number;

@@ -24,7 +24,7 @@ export async function getTables(): Promise<Table[]> {
 }
 
 export async function getDetails(): Promise<Details[]> {
-    const response = await fetch(url + 'detailed_stations/');
+    const response = await fetch(url + 'detailed_stations');
     return await response.json();
 }
 
@@ -84,6 +84,7 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     markers.subscribe(value => markersList = value)();
 
     const predictions = await getAllPredictions(date_value);
+    const details = await getDetails();
     if (predictions === null) {
         for (const marker of markersList) {
             marker.changeColor('black');
@@ -94,7 +95,7 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     for (const marker of markersList) {
         if (date_value >= new Date().toISOString()) {
             id = marker.getId();
-            const val = await getRatio(id, predictions);
+            const val = await getRatio(id, predictions, details);
             if (val === -1) {
                 color = 'black';
             } else {
@@ -111,12 +112,15 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     return markersList;
 }
 
-async function getRatio(id: number, predictions: Map<number, Prediction>): Promise<number> {
+async function getRatio(id: number, predictions: Map<number, Prediction>, details: Details[]): Promise<number> {
     const data = predictions.get(id);
     if (data === undefined) {
         return -1;
     }
-    const data2 = await getDetailsById(id);
+    const data2 = details.find((element) => element.id === id);
+    if (data2 === undefined) {
+        return -1;
+    }
     if (data2.capacity === 0) {
         return 0;
     }

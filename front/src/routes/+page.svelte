@@ -66,43 +66,39 @@
         }
 
         let soleil = new Set([0, 1]);
-    let soleil_nuage = new Set([2]);
-    let nuage = new Set([3]);
-    let pluie = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82]);
-    let verglas = new Set([56, 57, 66, 67]);
-    let brouillard = new Set([45, 48]);
-    let neige = new Set([71, 73, 75, 77, 85, 86]);
-    let orage = new Set([95, 96, 99]);
+        let soleil_nuage = new Set([2]);
+        let nuage = new Set([3]);
+        let pluie = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82]);
+        let verglas = new Set([56, 57, 66, 67]);
+        let brouillard = new Set([45, 48]);
+        let neige = new Set([71, 73, 75, 77, 85, 86]);
+        let orage = new Set([95, 96, 99]);
 
-    console.log(nuage.has(meteo));
+        console.log(nuage.has(meteo));
 
-    if (soleil.has(meteo)) {
-        src_img = '/meteo/soleil.png';
-    } else if (soleil_nuage.has(meteo)) {
-        src_img = '/meteo/soleil-nuage.svg';
-    } else if (nuage.has(meteo)) {
-        src_img = '/meteo/nuage.svg';
-    } else if (pluie.has(meteo)) {
-        src_img = '/meteo/pluie.svg';
-    } else if (verglas.has(meteo)) {
-        src_img = '/meteo/verglas.png';
-    } else if (brouillard.has(meteo)) {
-        src_img = '/meteo/brouillard.png';
-    } else if (neige.has(meteo)) {
-        src_img = '/meteo/neige.png';
-    } else if (orage.has(meteo)) {
-        src_img = '/meteo/tempete.png';
-    } else {
-        src_img = '/meteo/interdit.png';
-    }
+        if (soleil.has(meteo)) {
+            src_img = '/meteo/soleil.png';
+        } else if (soleil_nuage.has(meteo)) {
+            src_img = '/meteo/soleil-nuage.svg';
+        } else if (nuage.has(meteo)) {
+            src_img = '/meteo/nuage.svg';
+        } else if (pluie.has(meteo)) {
+            src_img = '/meteo/pluie.svg';
+        } else if (verglas.has(meteo)) {
+            src_img = '/meteo/verglas.png';
+        } else if (brouillard.has(meteo)) {
+            src_img = '/meteo/brouillard.png';
+        } else if (neige.has(meteo)) {
+            src_img = '/meteo/neige.png';
+        } else if (orage.has(meteo)) {
+            src_img = '/meteo/tempete.png';
+        } else {
+            src_img = '/meteo/interdit.png';
+        }
     });
     console.log(meteo);
 
     // Visuel météo
-
-    
-    
-
     //paramètres température
 </script>
 

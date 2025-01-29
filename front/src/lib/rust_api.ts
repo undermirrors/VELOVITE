@@ -28,7 +28,7 @@ export async function getStations(): Promise<Station[]> {
     return await response.json();
 }
 
-export async function getDetails(): Promise<Map<number,Details>> {
+export async function getDetails(): Promise<Map<number, Details>> {
     const response = await fetch(url + 'detailed_stations');
     const entries: [number, Details][] = Object.entries(await response.json()).map(([key, value]) => [Number(key), value as Details]);
     return new Map<number, Details>(entries);

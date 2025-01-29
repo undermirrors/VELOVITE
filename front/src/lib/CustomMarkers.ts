@@ -29,41 +29,34 @@ class CustomIcon extends L.Icon {
 export class CustomMarkers {
     id: number;
     marker: L.Marker;
-    station_name : string = "";
-    prediction_empty_slots : string = "";
-    prediction_available_bike : string = "";
+    station_name: string = "";
+    prediction_empty_slots: string = "";
+    prediction_available_bike: string = "";
 
     constructor(id: number, latitude: number, longitude: number) {
-        let station_capacity : string ="";
         this.id = id;
         this.marker = L.marker([latitude, longitude], {icon: new CustomIcon()}).addEventListener('click', async () => {
             //get station name
             await this.refreshStationName();
-           
+
             //get predictions
             await this.refreshPrediction();
 
             //display popup on click of markers
-            this.marker.bindPopup("<h3>"+this.station_name+"</h3><p>Velo'v disponibles : "+this.prediction_available_bike+"</p> <p>Bornes disponibles : "+this.prediction_empty_slots+"</p>");
+            this.marker.bindPopup("<h3>" + this.station_name + "</h3><p>Velo'v disponibles : " + this.prediction_available_bike + "</p> <p>Bornes disponibles : " + this.prediction_empty_slots + "</p>");
 
         });
 
         //display tooltip on hover of markers
-        this.marker.addEventListener('mouseover', async ()=>{
-            if(this.station_name==""){
+        this.marker.addEventListener('mouseover', async () => {
+            if (this.station_name == "") {
                 const station_data = await this.refreshStationName();
             }
 
             this.marker.bindTooltip(this.station_name);
 
         });
-      
-     
-       
-        
-        
     }
-
 
     getMarker() {
         return this.marker;
@@ -77,18 +70,18 @@ export class CustomMarkers {
         return this.id;
     }
 
-    async refreshStationName(){
+    async refreshStationName() {
         // We get the details for the selected station
         const station_data = await getDetailsById(this.id);
 
-        if(station_data.name !=""){
-            this.station_name=station_data.name
-        }else{
+        if (station_data.name != "") {
+            this.station_name = station_data.name
+        } else {
             this.station_name = "no available data"
         }
     }
 
-    async refreshPrediction(){
+    async refreshPrediction() {
         // We get the selected date from the store
         let selected_date: string = '';
         date.subscribe(value => selected_date = value)();
@@ -106,12 +99,12 @@ export class CustomMarkers {
             // We get the prediction for the selected date
             let predicted_data = await getPredict(this.id, date_id);
 
-            if(predicted_data==null){
-                this.prediction_available_bike='indisponible';
-                this.prediction_empty_slots='insdisponible';
-            }else{
-                this.prediction_available_bike=String(predicted_data?.available_bikes);
-                this.prediction_empty_slots=String(predicted_data?.free_stands);    
+            if (predicted_data == null) {
+                this.prediction_available_bike = 'indisponible';
+                this.prediction_empty_slots = 'insdisponible';
+            } else {
+                this.prediction_available_bike = String(predicted_data?.available_bikes);
+                this.prediction_empty_slots = String(predicted_data?.free_stands);
             }
 
             console.log(date_id)
@@ -120,8 +113,8 @@ export class CustomMarkers {
         } else {
             console.log('Date is in the past');
 
-            this.prediction_available_bike='indisponible';
-            this.prediction_empty_slots='insdisponible';
+            this.prediction_available_bike = 'indisponible';
+            this.prediction_empty_slots = 'insdisponible';
         }
     }
 

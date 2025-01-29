@@ -49,7 +49,7 @@ export class CustomMarkers {
         });
 
         //display tooltip on hover of markers
-        this.marker.addEventListener('hover', async ()=>{
+        this.marker.addEventListener('mouseover', async ()=>{
             if(this.station_name==""){
                 const station_data = await this.refreshStationName();
             }

@@ -15,6 +15,7 @@
         const L = await import('leaflet');
         const CustomMarkers = await import("$lib/CustomMarkers");
 
+        // Initialize the map
         const map = L.map(mapContainer).setView([45.74846, 4.84671], 13);
         map.zoomControl.setPosition('bottomright');
         L.tileLayer('http://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -22,7 +23,7 @@
                 '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
         }).addTo(map);
 
-
+        // We get the stations from the API and create a marker for each one
         let marker: CustomMarkers[] = [];
         let search = '';
         research.subscribe(value => search = value)();

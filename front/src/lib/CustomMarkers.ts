@@ -2,6 +2,11 @@ import {getDetailsById, getPredict} from "$lib/rust_api";
 import L from "leaflet";
 import {date} from '$lib/store';
 
+/**
+ * Custom icon class to change the color of the icon
+ *
+ * @param color
+ */
 class CustomIcon extends L.Icon {
     constructor(color: string = 'black') {
         // Do some SVG manipulation to change the color of the icon
@@ -26,6 +31,13 @@ class CustomIcon extends L.Icon {
     }
 }
 
+/**
+ * CustomMarkers class to handle the markers
+ *
+ * @param id
+ * @param latitude
+ * @param longitude
+ */
 export class CustomMarkers {
     id: number;
     marker: L.Marker;
@@ -33,6 +45,13 @@ export class CustomMarkers {
     prediction_empty_slots: string = "";
     prediction_available_bike: string = "";
 
+    /**
+     * Constructor for the CustomMarkers class
+     *
+     * @param id
+     * @param latitude
+     * @param longitude
+     */
     constructor(id: number, latitude: number, longitude: number) {
         this.id = id;
 
@@ -40,8 +59,6 @@ export class CustomMarkers {
         this.marker.bindPopup(""); // Bind an empty popup initially
 
         this.marker.addEventListener('click', async () => {
-            console.log("yooooooo");
-            
             //get station name
             await this.refreshStationName();
 
@@ -66,18 +83,36 @@ export class CustomMarkers {
         });
     }
 
+    /**
+     * Get the marker
+     *
+     * @returns the marker
+     */
     getMarker() {
         return this.marker;
     }
 
+    /**
+     * Change the color of the marker
+     *
+     * @param color
+     */
     changeColor(color: string) {
         this.marker.setIcon(new CustomIcon(color));
     }
 
+    /**
+     * Get the id of the marker
+     *
+     * @returns the id
+     */
     getId() {
         return this.id;
     }
 
+    /**
+     * Refresh the station name by calling the API
+     */
     async refreshStationName() {
         // We get the details for the selected station
         const station_data = await getDetailsById(this.id);
@@ -89,23 +124,26 @@ export class CustomMarkers {
         }
     }
 
+    /**
+     * Refresh the prediction by calling the API
+     */
     async refreshPrediction() {
         // We get the selected date from the store
-        let selected_date: string = '';
+        let selected_date: Date = new Date(0, 1, 1); // Initialised to avoid confusion
         date.subscribe(value => selected_date = value)();
 
-        console.log('value :' + selected_date);
-        if (selected_date >= new Date().toISOString()) {
+        if (selected_date >= new Date()) {
             // We do some date manipulation to get the next hour with minutes and seconds set to 0
-            let date_id = new Date(
-                new Date(selected_date).setHours(
-                    Number(selected_date.split('T')[1].split(':')[0]) + 1, 0, 0, 0)
-            ).toISOString();
-            console.log(date_id)
-            date_id = date_id.replaceAll(".000Z", "Z");
+            selected_date.setHours(selected_date.getHours() + 1);
+            selected_date.setMinutes(0);
+            selected_date.setSeconds(0);
+
+            let dateStr = selected_date.toLocaleString('sv-SE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(' ', 'T');
+
+            console.log(dateStr);
 
             // We get the prediction for the selected date
-            let predicted_data = await getPredict(this.id, date_id);
+            let predicted_data = await getPredict(this.id, dateStr);
 
             if (predicted_data == null) {
                 this.prediction_available_bike = 'indisponible';
@@ -115,7 +153,6 @@ export class CustomMarkers {
                 this.prediction_empty_slots = String(predicted_data?.free_stands);
             }
 
-            console.log(date_id)
             console.log(predicted_data);
 
         } else {

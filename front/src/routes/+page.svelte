@@ -22,10 +22,9 @@
 
 	onMount(async () => {
 		let global_meteo = await getWeatherForecast();
-		if (global_meteo !== null) {
-			temp = String(global_meteo.get(timeZ)?.temperature_2m) ?? '?';
-			meteo = Number(global_meteo.get(timeZ)?.weather_code) ?? -1;
-		}
+		temp = String(global_meteo.get(timeZ)?.temperature_2m) ?? '?';
+		meteo = Number(global_meteo.get(timeZ)?.weather_code) ?? -1;
+		
 	});
 
 	// Visuel météo

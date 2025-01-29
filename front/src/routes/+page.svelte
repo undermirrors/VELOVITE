@@ -16,20 +16,22 @@
 
 	let heure = currentTime;
 
-	let timeZ = jour + 'T' + heure + 'Z';
+	let timeZ = jour + 'T' + heure.split(':')[0] + ':00:00Z';
 	let temp = '';
 	let meteo = -1;
 
 	onMount(async () => {
 		let global_meteo = await getWeatherForecast();
-		temp = String(global_meteo.get(timeZ)?.temperature_2m) ?? '?';
-		meteo = Number(global_meteo.get(timeZ)?.weather_code) ?? -1;
-		
+		temp = String(global_meteo.get(timeZ)?.temperature_2m ?? '?');
+		meteo = Number(global_meteo.get(timeZ)?.weather_code ?? -1);
+        console.log(meteo);
+		console.log(global_meteo);
 	});
-
+    console.log(meteo);
+		
 	// Visuel météo
 
-	let src_img = '/meteo/Interdit.png';
+	let src_img;
 
 	let soleil = new Set([0, 1]);
 	let soleil_nuage = new Set([2]);
@@ -40,23 +42,41 @@
 	let neige = new Set([71, 73, 75, 77, 85, 86]);
 	let orage = new Set([95, 96, 99]);
 
+    console.log(nuage.has(meteo));
+
 	if (soleil.has(meteo)) {
 		src_img = '/meteo/autre-chose.png';
-	} else if (soleil_nuage.has(meteo)) {
+	} 
+    
+    else if (soleil_nuage.has(meteo)) {
 		src_img = '/meteo/soleil-nuage.svg';
-	} else if (nuage.has(meteo)) {
+	} 
+    
+    else if (nuage.has(meteo)) {
 		src_img = '/meteo/nuage.svg';
-	} else if (pluie.has(meteo)) {
+	} 
+    
+    else if (pluie.has(meteo)) {
 		src_img = '/meteo/pluie.svg';
-	} else if (verglas.has(meteo)) {
+	} 
+    
+    else if (verglas.has(meteo)) {
 		src_img = '/meteo/Verglas.png';
-	} else if (brouillard.has(meteo)) {
+	} 
+    
+    else if (brouillard.has(meteo)) {
 		src_img = '/meteo/Brouillard.png';
-	} else if (neige.has(meteo)) {
+	} 
+    
+    else if (neige.has(meteo)) {
 		src_img = '/meteo/Neige.png';
-	} else if (orage.has(meteo)) {
+	} 
+    
+    else if (orage.has(meteo)) {
 		src_img = '/meteo/tempete.png';
-	} else {
+	} 
+    
+    else {
 		src_img = '/meteo/Interdit.png';
 	}
 

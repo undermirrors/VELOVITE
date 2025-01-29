@@ -84,24 +84,23 @@
 	// Get the current time in the format HH:MM
 	// We use the ISO format to get the time in the same format as the API
 	let hoursAndMinutes = `${dateJour.toISOString().split('T')[1].split(':')[0]}:${dateJour.toISOString().split(':')[1].split('.')[0]}`;
-	console.log(hoursAndMinutes);
 
 	// Initialize the variables used for weather icon and temperature
 	let temp = '';
-	let meteo = -1;
+	let weather = -1;
 	let src_img = '';
 
 	async function updateWeather() {
-		let global_meteo = await getWeatherForecast();
-		if (global_meteo === null) {
+		let global_weather = await getWeatherForecast();
+		if (global_weather === null) {
 			temp = '?';
-			meteo = -1;
+			weather = -1;
 		} else {
 			let date2 = new Date();
 			date.subscribe((value) => (date2 = value))();
 			let dateStr = `${date2.getFullYear()}-${String(date2.getMonth() + 1).padStart(2, '0')}-${String(date2.getDate()).padStart(2, '0')}T${String(date2.getHours()).padStart(2, '0')}:00:00Z`;
-			temp = String(global_meteo.get(dateStr)?.temperature_2m);
-			meteo = Number(global_meteo.get(dateStr)?.weather_code);
+			temp = String(global_weather.get(dateStr)?.temperature_2m);
+			weather = Number(global_weather.get(dateStr)?.weather_code);
 		}
 
 		let soleil = new Set([0, 1]);
@@ -113,21 +112,21 @@
 		let neige = new Set([71, 73, 75, 77, 85, 86]);
 		let orage = new Set([95, 96, 99]);
 
-		if (soleil.has(meteo)) {
+		if (soleil.has(weather)) {
 			src_img = '/meteo/soleil.png';
-		} else if (soleil_nuage.has(meteo)) {
+		} else if (soleil_nuage.has(weather)) {
 			src_img = '/meteo/soleil-nuage.svg';
-		} else if (nuage.has(meteo)) {
+		} else if (nuage.has(weather)) {
 			src_img = '/meteo/nuage.svg';
-		} else if (pluie.has(meteo)) {
+		} else if (pluie.has(weather)) {
 			src_img = '/meteo/pluie.svg';
-		} else if (verglas.has(meteo)) {
+		} else if (verglas.has(weather)) {
 			src_img = '/meteo/verglas.png';
-		} else if (brouillard.has(meteo)) {
+		} else if (brouillard.has(weather)) {
 			src_img = '/meteo/brouillard.png';
-		} else if (neige.has(meteo)) {
+		} else if (neige.has(weather)) {
 			src_img = '/meteo/neige.png';
-		} else if (orage.has(meteo)) {
+		} else if (orage.has(weather)) {
 			src_img = '/meteo/tempete.png';
 		} else {
 			src_img = '/meteo/interdit.png';
@@ -138,7 +137,6 @@
 	onMount(async () => {
 		await updateWeather();
 	});
-	console.log(meteo);
 
 	// Visuel météo
 	//paramètres température

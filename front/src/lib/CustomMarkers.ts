@@ -54,32 +54,25 @@ export class CustomMarkers {
      */
     constructor(id: number, latitude: number, longitude: number) {
         this.id = id;
-
         this.marker = L.marker([latitude, longitude], {icon: new CustomIcon()});
         this.marker.bindPopup(""); // Bind an empty popup initially
 
         this.marker.addEventListener('click', async () => {
             //get station name
             await this.refreshStationName();
-
             //get predictions
             await this.refreshPrediction();
-
             //display popup on click of markers
             this.marker.setPopupContent("<h3>" + this.station_name + "</h3><p>Velo'v disponibles : " + this.prediction_available_bike + "</p> <p>Bornes disponibles : " + this.prediction_empty_slots + "</p>");
             this.marker.openPopup();
         });
 
-
-
         //display tooltip on hover of markers
         this.marker.addEventListener('mouseover', async () => {
             if (this.station_name == "") {
-                const station_data = await this.refreshStationName();
+                await this.refreshStationName();
             }
-
             this.marker.bindTooltip(this.station_name);
-
         });
     }
 
@@ -138,9 +131,14 @@ export class CustomMarkers {
             selected_date.setMinutes(0);
             selected_date.setSeconds(0);
 
-            let dateStr = selected_date.toLocaleString('sv-SE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(' ', 'T');
-
-            console.log(dateStr);
+            let dateStr = selected_date.toLocaleString('sv-SE', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit',
+                second: '2-digit'
+            }).replace(' ', 'T');
 
             // We get the prediction for the selected date
             let predicted_data = await getPredict(this.id, dateStr);
@@ -154,7 +152,6 @@ export class CustomMarkers {
             }
 
             console.log(predicted_data);
-
         } else {
             console.log('Date is in the past');
 

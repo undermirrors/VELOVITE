@@ -1,7 +1,10 @@
 use crate::downloader::{Value, WeatherData};
+use crate::models::DetailedStation;
 use crate::utils::distance;
+use crate::{establish_connection, schema};
 use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc};
-use log::info;
+use diesel::{ExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
+use log::{info, warn};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rayon::prelude::ParallelBridge;
 use serde::{Deserialize, Serialize};
@@ -14,6 +17,8 @@ use std::sync::{Arc, Mutex};
 const BENCHMARK_PERCENTAGE: f32 = 20.0;
 
 pub fn benchmark() {
+    let mut connection = establish_connection();
+
     let mut data = read_merged_data_from_file("merged_data");
 
     info!(
@@ -38,11 +43,11 @@ pub fn benchmark() {
     info!("📊 Removed data length :{}", len_removed);
 
     info!("📊 Benchmarking..");
-    let result: HashMap<u32, Vec<f32>> = data
+    let result: HashMap<u32, Vec<u32>> = data
         .par_iter()
         .map(|(key, value)| {
             info!("🔍 Benchmarking station {}..", key);
-            let station_result: Vec<f32> = removed_data
+            let station_result: Vec<u32> = removed_data
                 .get(key)
                 .unwrap()
                 .par_iter()
@@ -70,10 +75,9 @@ pub fn benchmark() {
                         })
                         .unwrap();
 
-                    (((nearest_data.available_bikes - wanted_point.available_bikes) as f32
-                        / (nearest_data.free_stands + nearest_data.available_bikes) as f32)
-                        * 100.0)
-                        .abs()
+                    nearest_data
+                        .available_bikes
+                        .abs_diff(wanted_point.available_bikes)
                 })
                 .collect();
 
@@ -94,28 +98,49 @@ pub fn benchmark() {
         .unwrap();
 
     for (key, value) in result.iter() {
+        use schema::station::dsl::station;
+        let station_details = match station
+            .select(DetailedStation::as_select())
+            .filter(schema::station::id.eq(*key as i32))
+            .limit(1)
+            .first::<DetailedStation>(&mut connection)
+        {
+            Ok(details) => details,
+            Err(_) => {
+                warn!("❌ Station {} not found in the database", key);
+                continue;
+            }
+        };
+
         if value.is_empty() {
             continue;
         }
-        let average = value.iter().sum::<f32>() / value.len() as f32;
+        let average =
+            value.iter().sum::<u32>() as f32 / value.len() as f32 / station_details.capacity as f32
+                * 100.0;
         let median = {
             let mut sorted = value.clone();
-            sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
+            sorted.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Equal));
             let len = sorted.len();
             if len % 2 == 0 {
-                (sorted[len / 2] + sorted[len / 2 - 1]) / 2.0
+                (sorted[len / 2] + sorted[len / 2 - 1]) as f32 / 2.0
             } else {
-                sorted[len / 2]
+                sorted[len / 2] as f32
             }
-        };
-        let min = value
+        } / station_details.capacity as f32
+            * 100.0;
+        let min = *(value
             .iter()
             .min_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap();
-        let max = value
+            .unwrap()) as f32
+            / station_details.capacity as f32
+            * 100.0;
+        let max = *(value
             .iter()
             .max_by(|a, b| a.partial_cmp(b).unwrap())
-            .unwrap();
+            .unwrap()) as f32
+            / station_details.capacity as f32
+            * 100.0;
 
         info!(
             "🆔 {} : Average : {} Median : {} Min : {} Max : {}",
@@ -131,9 +156,13 @@ pub fn benchmark() {
         ])
         .unwrap();
 
-        total += value.iter().sum::<f32>();
+        total += average * value.len() as f32;
         total_len += value.len();
-        all_distances.extend(value);
+        all_distances.extend(
+            value
+                .iter()
+                .map(|v| *v as f32 / station_details.capacity as f32 * 100.0),
+        );
     }
 
     wtr.flush().unwrap();
@@ -148,14 +177,14 @@ pub fn benchmark() {
             all_distances[len / 2]
         }
     };
-    let main_min = all_distances
+    let main_min = *all_distances
         .iter()
         .min_by(|a, b| a.partial_cmp(b).unwrap())
-        .unwrap();
-    let main_max = all_distances
+        .unwrap_or(&0.0);
+    let main_max = *all_distances
         .iter()
         .max_by(|a, b| a.partial_cmp(b).unwrap())
-        .unwrap();
+        .unwrap_or(&0.0);
 
     info!("📊 Average of all stations : {}", average);
     info!("📊 Median of all stations : {}", main_median);

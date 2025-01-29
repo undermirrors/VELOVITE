@@ -1,11 +1,17 @@
 use ::serde::{Deserialize, Serialize};
-use chrono::{DateTime, Utc};
+use chrono::{DateTime, Duration, NaiveDateTime, Utc};
 use std::collections::HashMap;
+use std::sync::{Arc, Mutex};
+use lazy_static::lazy_static;
 use tracing::{error, info};
 
 const WEATHER_FORECAST_URL: &str = "https://api.open-meteo.com/v1/forecast?latitude=45.7485&longitude=4.8467&hourly=temperature_2m,precipitation_probability,precipitation,weather_code,wind_speed_10m&timeformat=unixtime";
 const WEATHER_URL: &str = "https://historical-forecast-api.open-meteo.com/v1/forecast?latitude=45.7485&longitude=4.8467&start_date=2022-01-01&end_date=2025-01-23&hourly=temperature_2m,precipitation,wind_speed_10m&timeformat=unixtime&timezone=Europe%2FBerlin";
 const VELOV_URL: &str = "https://data.grandlyon.com/fr/datapusher/ws/timeseries/jcd_jcdecaux.historiquevelov/all.json?filename=stations-velo-v-de-la-metropole-de-lyon---disponibilites-temps-reel";
+
+lazy_static!(
+    static ref stored_forecast: Arc<Mutex<Option<(NaiveDateTime, HashMap<DateTime<Utc>, WeatherData>)>>> = Arc::new(Mutex::new(None));
+);
 
 /// Downloads weather forecast data from the specified URL and returns a `HashMap`
 /// where the keys are `DateTime<Utc>` and the values are `WeatherData`.
@@ -29,6 +35,10 @@ const VELOV_URL: &str = "https://data.grandlyon.com/fr/datapusher/ws/timeseries/
 /// ```
 pub async fn download_weather_forecast() -> Result<HashMap<DateTime<Utc>, WeatherData>, &'static str>
 {
+    if let Some(data) = check_stored_data() {
+        return Ok(data);
+    }
+
     info!("🌤️🚀 Downloading weather forecast data...");
     let response = reqwest::get(WEATHER_FORECAST_URL)
         .await
@@ -89,7 +99,29 @@ pub async fn download_weather_forecast() -> Result<HashMap<DateTime<Utc>, Weathe
         )
         .collect();
 
+    stored_forecast.lock().as_mut().unwrap().replace((Utc::now().naive_utc() + Duration::hours(1), weather_mapped.clone()));
+
     Ok(weather_mapped)
+}
+
+
+/// Checks if there is stored weather forecast data that is still valid.
+///
+/// # Returns
+///
+/// An `Option` containing a `HashMap` with `DateTime<Utc>` as keys and `WeatherData` as values,
+/// if the stored data is still valid. Otherwise, returns `None`.
+fn check_stored_data() -> Option<HashMap<DateTime<Utc>, WeatherData>> {
+    let stored = stored_forecast.lock().unwrap();
+
+    if let Some((timestamp, forecast)) = stored.as_ref() {
+        if timestamp > &Utc::now().naive_utc() {
+            info!("📦🚀 Using cached weather forecast data...");
+            return Some(forecast.clone());
+        }
+    }
+    
+    None
 }
 
 /// Downloads historical weather data from the specified URL and stores it in a JSON file.

@@ -10,7 +10,7 @@ use axum::extract::{Path, Query, State};
 use axum::http::StatusCode;
 use axum::response::IntoResponse;
 use axum::Json;
-use chrono::{Datelike, NaiveDateTime, Timelike};
+use chrono::{Datelike, NaiveDate, NaiveDateTime, Timelike};
 use diesel::{ExpressionMethods, PgTextExpressionMethods, QueryDsl, RunQueryDsl, SelectableHelper};
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
@@ -297,7 +297,7 @@ pub async fn predict(
         .any(|holiday| params.date.date() >= holiday.start && params.date.date() <= holiday.end);
 
     let forecast = download_weather_forecast().await.unwrap();
-    let now = chrono::Utc::now().naive_utc();
+    let now = NaiveDate::from_ymd_opt(2025, 1, 29).unwrap().and_hms_opt(0, 0, 0).unwrap();
     if params.date < now {
         match station_data.par_iter().find_first(|d| {
             d.month == params.date.month()

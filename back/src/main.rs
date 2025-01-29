@@ -33,6 +33,14 @@ use std::env;
 use std::sync::{Arc, Mutex};
 
 pub const MIGRATIONS: EmbeddedMigrations = embed_migrations!("./migrations");
+
+/// Application state.
+///
+/// # Fields
+///
+/// * `connection` - The database connection.
+/// * `data` - The merged data.
+/// * `holidays` - The school holidays.
 #[derive(Clone)]
 pub struct AppState {
     connection: Arc<Mutex<PgConnection>>,
@@ -40,6 +48,7 @@ pub struct AppState {
     holidays: Arc<Vec<SchoolHolidays>>,
 }
 
+/// Main function.
 #[tokio::main]
 async fn main() {
     tracing_subscriber::fmt::init();
@@ -132,6 +141,11 @@ async fn main() {
         .unwrap();
 }
 
+/// Establishes a connection to the database.
+///
+/// # Returns
+///
+/// * A connection to the database.
 pub fn establish_connection() -> PgConnection {
     dotenvy::dotenv().unwrap();
 
@@ -146,6 +160,7 @@ pub fn establish_connection() -> PgConnection {
     connection
 }
 
+/// Function to listen for shutdown signals.
 async fn shutdown_signal() {
     let ctrl_c = async {
         signal::ctrl_c()
@@ -174,6 +189,11 @@ async fn shutdown_signal() {
     }
 }
 
+/// Mock router.
+///
+/// # Returns
+///
+/// * A router with mock data.
 fn mock_router() -> Router {
     Router::new()
         .route("/detailed_stations", get(get_detailed_stations_mock()))
@@ -181,6 +201,15 @@ fn mock_router() -> Router {
         .layer(CorsLayer::permissive())
 }
 
+/// Normal router with database connection.
+///
+/// # Arguments
+///
+/// * `app_state` - The application state containing the database connection.
+///
+/// # Returns
+///
+/// * A router with the database connection.
 fn normal_router(app_state: AppState) -> Router {
     Router::new()
         .route("/detailed_stations", get(get_detailed_stations))

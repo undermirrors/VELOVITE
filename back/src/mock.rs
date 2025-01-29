@@ -40,10 +40,61 @@ lazy_static! {
     ];
 }
 
+/// Downloads Velov bike-sharing data from the specified URL in a paginated manner and stores each page in a separate JSON file.
+///
+/// # Arguments
+///
+/// * `max_velov_features` - The maximum number of features to download per request.
+/// * `velov_start` - The starting index for pagination.
+///
+/// # Errors
+///
+/// This function will log an error and break the loop if:
+/// - The HTTP request fails.
+/// - The response text cannot be read.
+/// - The JSON response cannot be parsed.
+/// - The data cannot be serialized to JSON.
+/// - The JSON data cannot be written to a file.
+///
+/// # Example
+///
+/// ```rust
+/// download_velov(100, 0).await;
+/// ```
+/// Returns a JSON response containing a mock array of detailed stations.
+///
+/// # Example
+///
+/// ```
+/// use axum::Json;
+/// use crate::mock::get_detailed_stations_mock;
+///
+/// let detailed_stations = get_detailed_stations_mock();
+/// assert_eq!(detailed_stations.0.len(), 2);
+/// ```
+///
+/// # Returns
+///
+/// A `Json` response containing a reference to a static array of `DetailedStation` objects.
 pub fn get_detailed_stations_mock() -> Json<&'static [DetailedStation; 2]> {
     Json(&*DETAILED_STATIONS_MOCK)
 }
 
+/// Returns a JSON response containing a mock array of basic stations.
+///
+/// # Example
+///
+/// ```
+/// use axum::Json;
+/// use crate::mock::get_stations_mock;
+///
+/// let stations = get_stations_mock();
+/// assert_eq!(stations.0.len(), 2);
+/// ```
+///
+/// # Returns
+///
+/// A `Json` response containing a reference to a static array of `BasicStation` objects.
 pub fn get_stations_mock() -> Json<&'static [BasicStation; 2]> {
     Json(&*STATIONS_MOCK)
 }

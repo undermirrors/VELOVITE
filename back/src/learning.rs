@@ -10,6 +10,21 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::sync::{Arc, Mutex};
 
+/// Merges the Velov, weather, and school holidays data into a single dataset. and writes it to a file.
+/// 
+/// # Returns
+/// 
+/// * nothing
+/// 
+/// # Panics
+/// 
+/// Panics if the weather data is missing for a given date.
+/// 
+/// # Examples
+/// 
+/// ```rust
+/// merge_data();
+/// ```
 pub fn merge_data() {
     info!("📥 Loading school holidays data..");
     let school_holidays: Vec<SchoolHolidays> = serde_json::from_str(
@@ -89,6 +104,17 @@ pub fn merge_data() {
     write_merged_data_to_file("merged_data", hashmapped);
 }
 
+/// Filters the Velov data to keep only the useful data and writes it to a file.
+/// 
+/// # Returns
+/// 
+/// * nothing
+/// 
+/// # Examples
+/// 
+/// ```rust
+/// filter_velov_data();
+/// ```
 pub fn filter_velov_data() {
     info!("🧹 Filtering velov data...");
     let original_stats = Arc::new(Mutex::new(HashMap::<u32, u32>::new()));
@@ -205,6 +231,21 @@ pub fn filter_velov_data() {
     info!("✅ velov_training_data.json written!");
 }
 
+/// Reads the merged data from the files and returns it as a hashmap.
+/// 
+/// # Arguments
+/// 
+/// * `path` - The path to the directory containing the files.
+/// 
+/// # Returns
+/// 
+/// * A hashmap containing the merged data.
+/// 
+/// # Examples
+/// 
+/// ```rust
+/// let data = read_merged_data_from_file("merged_data");
+/// ```
 pub fn read_merged_data_from_file(path: &str) -> HashMap<u32, Vec<MergedData>> {
     info!("📖 Reading useful data from files..");
     // List all files in the directory
@@ -229,6 +270,21 @@ pub fn read_merged_data_from_file(path: &str) -> HashMap<u32, Vec<MergedData>> {
     Arc::try_unwrap(data).unwrap().into_inner().unwrap()
 }
 
+/// Writes the merged data to files.
+/// 
+/// # Arguments
+/// 
+/// * `path` - The path to the directory where the files will be written.
+/// 
+/// # Returns
+/// 
+/// * nothing
+/// 
+/// # Examples
+/// 
+/// ```rust
+/// write_merged_data_to_file("merged_data", data);
+/// ```
 fn write_merged_data_to_file(path: &str, data: HashMap<u32, Vec<MergedData>>) {
     info!("✍️ Splitting data into files..");
     data.par_iter().for_each(|(key, value)| {
@@ -240,6 +296,27 @@ fn write_merged_data_to_file(path: &str, data: HashMap<u32, Vec<MergedData>>) {
     info!("✅ Data written to files!");
 }
 
+/// Data structure representing the availability of bikes and free stands at a station.
+/// 
+/// # Fields
+/// 
+/// * `id` - The ID of the station.
+/// * `date` - The date and time of the data.
+/// * `capacity` - The total capacity of the station.
+/// * `bikes` - The number of available bikes.
+/// * `stands` - The number of free stands.
+/// 
+/// # Examples
+/// 
+/// ```rust
+/// let data = UsefulData {
+///    id: 1,
+///    date: Utc::now(),
+///    capacity: 20,
+///    bikes: 10,
+///    stands: 10,
+/// };
+/// ```
 #[derive(Debug, Serialize, Deserialize, Clone)]
 struct UsefulData {
     id: u32,
@@ -249,6 +326,21 @@ struct UsefulData {
     stands: u32,
 }
 
+/// Data structure representing the availability of bikes and free stands at a station.
+/// 
+/// # Fields
+/// 
+/// * `id` - The ID of the station.
+/// * `hour` - The hour of the data.
+/// * `day` - The day of the data.
+/// * `month` - The month of the data.
+/// * `week_day` - The day of the week of the data.
+/// * `holidays` - A flag indicating whether the data is on a holiday.
+/// * `free_stands` - The number of free stands available.
+/// * `available_bikes` - The number of bikes available.
+/// * `precipitation` - The amount of precipitation.
+/// * `temperature` - The temperature.
+/// * `wind_speed` - The wind speed.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct MergedData {
     pub id: u32,
@@ -264,6 +356,12 @@ pub struct MergedData {
     pub wind_speed: f32,
 }
 
+/// Data structure representing the school holidays.
+/// 
+/// # Fields
+/// 
+/// * `start` - The start date of the holidays.
+/// * `end` - The end date of the holidays.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct SchoolHolidays {
     pub start: NaiveDate,

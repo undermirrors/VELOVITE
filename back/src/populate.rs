@@ -6,6 +6,7 @@ use tracing::info;
 
 const URL: &str = "https://data.grandlyon.com/geoserver/metropole-de-lyon/ows?SERVICE=WFS&VERSION=2.0.0&request=GetFeature&typename=metropole-de-lyon:pvo_patrimoine_voirie.pvostationvelov&outputFormat=application/json&SRSNAME=EPSG:4171&sortBy=gid";
 
+/// Populates the database with Velov station data.
 pub async fn populate() {
     info!("🚴 Populating the database 🌐");
 
@@ -46,6 +47,18 @@ pub async fn populate() {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+/// Represents the Velov station data.
+///
+/// # Fields
+///
+/// * `type` - The type of the data.
+/// * `features` - The features of the data.
+/// * `total_features` - The total number of features.
+/// * `number_matched` - The number of matched features.
+/// * `number_returned` - The number of returned features.
+/// * `time_stamp` - The timestamp of the data.
+/// * `crs` - The coordinate reference system.
+/// * `bbox` - The bounding box of the data.
 pub struct StationsData {
     #[serde(rename = "type")]
     pub type_field: String,
@@ -58,6 +71,16 @@ pub struct StationsData {
     pub bbox: Vec<f64>,
 }
 
+/// Represents a feature of the Velov station data.
+///
+/// # Fields
+///
+/// * `type` - The type of the feature.
+/// * `id` - The ID of the feature.
+/// * `geometry` - The geometry of the feature.
+/// * `geometry_name` - The name of the geometry.
+/// * `properties` - The properties of the feature.
+/// * `bbox` - The bounding box of the feature.
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Feature {
@@ -73,6 +96,12 @@ pub struct Feature {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+/// Represents the geometry of a feature.
+///
+/// # Fields
+///
+/// * `type` - The type of the geometry.
+/// * `coordinates` - The coordinates of the geometry.
 pub struct Geometry {
     #[serde(rename = "type")]
     pub type_field: String,
@@ -81,6 +110,24 @@ pub struct Geometry {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+/// Represents the properties of a feature.
+///
+/// # Fields
+///
+/// * `idstation` - The ID of the station.
+/// * `nom` - The name of the station.
+/// * `adresse1` - The first address of the station.
+/// * `adresse2` - The second address of the station.
+/// * `commune` - The commune where the station is located.
+/// * `numdansarrondissement` - The number of the station in the arrondissement.
+/// * `nbbornettes` - The number of bornettes at the station.
+/// * `stationbonus` - The station bonus.
+/// * `pole` - The pole of the station.
+/// * `ouverte` - Whether the station is open.
+/// * `achevement` - The achievement of the station.
+/// * `validite` - The validity of the station.
+/// * `gid` - The GID of the station.
+/// * `code_insee` - The INSEE code of the station.
 pub struct Properties {
     pub idstation: i32,
     pub nom: String,
@@ -101,6 +148,12 @@ pub struct Properties {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+/// Represents the coordinate reference system.
+///
+/// # Fields
+///
+/// * `type` - The type of the coordinate reference system.
+/// * `properties` - The properties of the coordinate reference system.
 pub struct Crs {
     #[serde(rename = "type")]
     pub type_field: String,
@@ -109,6 +162,11 @@ pub struct Crs {
 
 #[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
+/// Represents a propertie.
+///
+/// # Fields
+///
+/// * `name` - The name.
 pub struct Properties2 {
     pub name: String,
 }

@@ -14,6 +14,12 @@ use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 use tracing::info;
 
+/// Fetches the weather forecast data asynchronously.
+///
+/// # Returns
+///
+/// * `StatusCode::OK` with the forecast data in JSON format if successful.
+/// * `StatusCode::INTERNAL_SERVER_ERROR` with an error message if the download fails.
 pub async fn get_weather_forecast() -> impl IntoResponse {
     let forecast_data = download_weather_forecast().await;
     match forecast_data {
@@ -25,6 +31,17 @@ pub async fn get_weather_forecast() -> impl IntoResponse {
             .into_response(),
     }
 }
+
+/// Retrieves detailed information about all stations from the database.
+///
+/// # Arguments
+///
+/// * `state` - The application state containing the database connection.
+///
+/// # Returns
+///
+/// * `StatusCode::OK` with the detailed station data in JSON format if successful.
+/// * `StatusCode::INTERNAL_SERVER_ERROR` with an error message if the query fails.
 pub async fn get_detailed_stations(State(state): State<AppState>) -> impl IntoResponse {
     let mut connection = state.connection.lock().unwrap();
 
@@ -42,6 +59,16 @@ pub async fn get_detailed_stations(State(state): State<AppState>) -> impl IntoRe
     }
 }
 
+/// Retrieves basic information about all stations from the database.
+///
+/// # Arguments
+///
+/// * `state` - The application state containing the database connection.
+///
+/// # Returns
+///
+/// * `StatusCode::OK` with the basic station data in JSON format if successful.
+/// * `StatusCode::INTERNAL_SERVER_ERROR` with an error message if the query fails.
 pub async fn get_stations(State(state): State<AppState>) -> impl IntoResponse {
     let mut connection = state.connection.lock().unwrap();
 
@@ -59,6 +86,17 @@ pub async fn get_stations(State(state): State<AppState>) -> impl IntoResponse {
     }
 }
 
+/// Retrieves detailed information about a specific station by its ID.
+///
+/// # Arguments
+///
+/// * `state` - The application state containing the database connection.
+/// * `id` - The ID of the station to retrieve.
+///
+/// # Returns
+///
+/// * `StatusCode::OK` with the detailed station data in JSON format if successful.
+/// * `StatusCode::NOT_FOUND` with an error message if the station is not found.
 pub async fn get_detailed_station(
     State(state): State<AppState>,
     Path(id): Path<i32>,
@@ -77,6 +115,17 @@ pub async fn get_detailed_station(
     }
 }
 
+/// Searches for stations by name using a case-insensitive partial match.
+///
+/// # Arguments
+///
+/// * `state` - The application state containing the database connection.
+/// * `name` - The name or partial name of the station to search for.
+///
+/// # Returns
+///
+/// * `StatusCode::OK` with the matching station data in JSON format if successful.
+/// * `StatusCode::NOT_FOUND` with an error message if no stations are found.
 pub async fn search_station(
     State(state): State<AppState>,
     Path(name): Path<String>,
@@ -95,12 +144,25 @@ pub async fn search_station(
     }
 }
 
+/// Parameters for the `predict` function, including station ID and date.
+///
+/// # Fields
+///
+/// * `id` - The ID of the station.
+/// * `date` - The date and time for which to predict availability.
 #[derive(Deserialize)]
 pub struct PredictParams {
     id: u32,
     date: NaiveDateTime,
 }
 
+/// Data structure representing the availability of bikes and free stands at a station.
+///
+/// # Fields
+///
+/// * `id` - The ID of the station.
+/// * `free_stands` - The number of free stands available.
+/// * `available_bikes` - The number of bikes available.
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct AvailabilityData {
     id: u32,
@@ -108,6 +170,17 @@ pub struct AvailabilityData {
     available_bikes: u32,
 }
 
+/// Predicts the availability of bikes and free stands at a station for a given date and time.
+///
+/// # Arguments
+///
+/// * `data` - The application state containing the prediction data and holidays.
+/// * `params` - The parameters for the prediction, including station ID and date.
+///
+/// # Returns
+///
+/// * `StatusCode::OK` with the predicted availability data in JSON format if successful.
+/// * `StatusCode::NOT_FOUND` with an error message if the station or weather data is not found.
 pub async fn predict(
     State(data): State<AppState>,
     Query(params): Query<PredictParams>,
@@ -179,9 +252,13 @@ pub async fn predict(
         return (StatusCode::NOT_FOUND, "No data found".to_owned()).into_response();
     }
 
-    (StatusCode::OK, Json(AvailabilityData {
-        id: wanted_point.id,
-        available_bikes: wanted_point.available_bikes,
-        free_stands: wanted_point.free_stands,
-    })).into_response()
+    (
+        StatusCode::OK,
+        Json(AvailabilityData {
+            id: wanted_point.id,
+            available_bikes: wanted_point.available_bikes,
+            free_stands: wanted_point.free_stands,
+        }),
+    )
+        .into_response()
 }

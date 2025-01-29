@@ -72,7 +72,6 @@ export async function getDetailsById(id: number): Promise<Details> {
  * @returns a map of the predictions for each station if found, null otherwise
  */
 export async function getAllPredictions(date: string): Promise<Map<number, Prediction> | null> {
-    console.log(date);
     date = date.replaceAll(':', '%3A');
 
     let response;

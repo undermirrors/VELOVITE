@@ -152,8 +152,6 @@ export class CustomMarkers {
                 this.prediction_available_bike = String(predicted_data?.available_bikes);
                 this.prediction_empty_slots = String(predicted_data?.free_stands);
             }
-
-            console.log(predicted_data);
         } else {
             console.log('Date is in the past');
 

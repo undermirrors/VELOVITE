@@ -38,11 +38,11 @@ pub fn benchmark() {
     info!("📊 Removed data length :{}", len_removed);
 
     info!("📊 Benchmarking..");
-    let result: HashMap<u32, Vec<u32>> = data
+    let result: HashMap<u32, Vec<f32>> = data
         .par_iter()
         .map(|(key, value)| {
             info!("🔍 Benchmarking station {}..", key);
-            let station_result: Vec<u32> = removed_data
+            let station_result: Vec<f32> = removed_data
                 .get(key)
                 .unwrap()
                 .par_iter()
@@ -70,7 +70,10 @@ pub fn benchmark() {
                         })
                         .unwrap();
 
-                    (nearest_data.available_bikes).abs_diff(wanted_point.available_bikes)
+                    (((nearest_data.available_bikes - wanted_point.available_bikes) as f32
+                        / (nearest_data.free_stands + nearest_data.available_bikes) as f32)
+                        * 100.0)
+                        .abs()
                 })
                 .collect();
 
@@ -82,9 +85,9 @@ pub fn benchmark() {
     info!("📊 Results :");
     // Display for each station, the average, the median, the min and the max of the distance
     // then the average of all the stations
-    let mut total = 0;
+    let mut total = 0.0;
     let mut total_len = 0;
-    let mut all_distances: Vec<u32> = Vec::new();
+    let mut all_distances: Vec<f32> = Vec::new();
 
     let mut wtr = csv::Writer::from_path("benchmark_results.csv").unwrap();
     wtr.write_record(["Station ID", "Average", "Median", "Min", "Max"])
@@ -94,15 +97,15 @@ pub fn benchmark() {
         if value.is_empty() {
             continue;
         }
-        let average = value.iter().sum::<u32>() as f32 / value.len() as f32;
+        let average = value.iter().sum::<f32>() / value.len() as f32;
         let median = {
             let mut sorted = value.clone();
             sorted.sort_by(|a, b| a.partial_cmp(b).unwrap());
             let len = sorted.len();
             if len % 2 == 0 {
-                (sorted[len / 2] + sorted[len / 2 - 1]) as f32 / 2.0
+                (sorted[len / 2] + sorted[len / 2 - 1]) / 2.0
             } else {
-                sorted[len / 2] as f32
+                sorted[len / 2]
             }
         };
         let min = value
@@ -128,21 +131,21 @@ pub fn benchmark() {
         ])
         .unwrap();
 
-        total += value.iter().sum::<u32>();
+        total += value.iter().sum::<f32>();
         total_len += value.len();
         all_distances.extend(value);
     }
 
     wtr.flush().unwrap();
 
-    let average = total as f32 / total_len as f32;
+    let average = total / total_len as f32;
     let main_median = {
-        all_distances.sort_by(|a, b| a.partial_cmp(b).unwrap());
+        all_distances.sort_by(|a, b| a.partial_cmp(b).unwrap_or(std::cmp::Ordering::Less));
         let len = all_distances.len();
         if len % 2 == 0 {
-            (all_distances[len / 2] + all_distances[len / 2 - 1]) as f32 / 2.0
+            (all_distances[len / 2] + all_distances[len / 2 - 1]) / 2.0
         } else {
-            all_distances[len / 2] as f32
+            all_distances[len / 2]
         }
     };
     let main_min = all_distances

@@ -6,6 +6,12 @@ interface WeatherForecast {
     weather_code: number;
 }
 
+interface Prediction {
+    id: number;
+    free_stands: number;
+    available_bikes: number;
+}
+
 interface Table {
     id: number;
     latitude: number;

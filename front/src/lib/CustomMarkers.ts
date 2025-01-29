@@ -19,7 +19,7 @@ class CustomIcon extends L.Icon {
 
         super({
             iconUrl: svgUrl,
-            iconSize: [30, 30],
+            iconSize: [20, 20],
             iconAnchor: [20, 40],
             popupAnchor: [0, -40]
         });

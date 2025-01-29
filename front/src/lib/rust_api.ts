@@ -34,6 +34,23 @@ export async function getDetailsById(id: number): Promise<Details> {
     return await response.json();
 }
 
+export async function getAllPredictions(date: string): Promise<Prediction[] | null> {
+    date = date.replaceAll(':', '%3A');
+    date = date.replaceAll('Z', '');
+    let response;
+    try {
+        response = await fetch(url + 'predictions?date=' + date);
+        if (!response.ok) {
+            console.log('Error fetching prediction : ', response.statusText);
+            return null;
+        }
+    } catch (error) {
+        console.error('Error fetching prediction:', error);
+        return null;
+    }
+    return await response.json();
+}
+
 export async function getPredict(id: number, date: string): Promise<Prediction | null> {
     date = date.replaceAll(':', '%3A');
     date = date.replaceAll('Z', '');
@@ -66,10 +83,18 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     let markersList: CustomMarkers[] = [];
     markers.subscribe(value => markersList = value)();
 
+    let predictions = await getAllPredictions(date_value);
+    if (predictions === null) {
+        for (const marker of markersList) {
+            marker.changeColor('black');
+        }
+        return markersList;
+    }
+
     for (const marker of markersList) {
         if (date_value >= new Date().toISOString()) {
             id = marker.getId();
-            let val = await getRatio(id, date_value);
+            let val = await getRatio(id, predictions);
             if (val === -1) {
                 color = 'black';
             } else {
@@ -86,13 +111,11 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     return markersList;
 }
 
-async function getRatio(id: number, date: string): Promise<number> {
-    let data1;
-    data1 = await getPredict(id, date);
-    if (data1 === null) {
+async function getRatio(id: number, predictions: Prediction[]): Promise<number> {
+    let data1 = predictions.find(element => element.id === id);
+    if (data1 === undefined) {
         return -1;
     }
-
     let data2 = await getDetailsById(id);
     if (data2.capacity === 0) {
         return 0;

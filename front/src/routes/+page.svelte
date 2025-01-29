@@ -72,7 +72,7 @@
     console.log(nuage.has(meteo));
 
     if (soleil.has(meteo)) {
-        src_img = '/meteo/autre-chose.png';
+        src_img = '/meteo/soleil.png';
     } else if (soleil_nuage.has(meteo)) {
         src_img = '/meteo/soleil-nuage.svg';
     } else if (nuage.has(meteo)) {
@@ -80,15 +80,15 @@
     } else if (pluie.has(meteo)) {
         src_img = '/meteo/pluie.svg';
     } else if (verglas.has(meteo)) {
-        src_img = '/meteo/Verglas.png';
+        src_img = '/meteo/verglas.png';
     } else if (brouillard.has(meteo)) {
-        src_img = '/meteo/Brouillard.png';
+        src_img = '/meteo/brouillard.png';
     } else if (neige.has(meteo)) {
-        src_img = '/meteo/Neige.png';
+        src_img = '/meteo/neige.png';
     } else if (orage.has(meteo)) {
         src_img = '/meteo/tempete.png';
     } else {
-        src_img = '/meteo/Interdit.png';
+        src_img = '/meteo/interdit.png';
     }
     });
     console.log(meteo);

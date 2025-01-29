@@ -131,7 +131,7 @@ export class CustomMarkers {
             selected_date.setMinutes(0);
             selected_date.setSeconds(0);
 
-            let dateStr = selected_date.toLocaleString('sv-SE', {
+            const dateStr = selected_date.toLocaleString('sv-SE', {
                 year: 'numeric',
                 month: '2-digit',
                 day: '2-digit',
@@ -141,7 +141,7 @@ export class CustomMarkers {
             }).replace(' ', 'T');
 
             // We get the prediction for the selected date
-            let predicted_data = await getPredict(this.id, dateStr);
+            const predicted_data = await getPredict(this.id, dateStr);
 
             if (predicted_data == null) {
                 this.prediction_available_bike = 'indisponible';

@@ -396,7 +396,7 @@ pub fn filter_velov_data() {
 /// let data = read_merged_data_from_file("merged_data");
 /// ```
 pub fn read_merged_data_from_file(path: &str) -> HashMap<u32, Vec<MergedData>> {
-    info!("📖 Reading useful data from files..");
+    info!("📖 Reading data from files..");
     // List all files in the directory
     let mut files: Vec<_> = fs::read_dir(path)
         .unwrap()
@@ -415,7 +415,7 @@ pub fn read_merged_data_from_file(path: &str) -> HashMap<u32, Vec<MergedData>> {
         let mut data_guard = data.lock().unwrap();
         data_guard.insert(file_data.first().unwrap().id, file_data);
     });
-    info!("✅ Useful data read from files!");
+    info!("✅ Data read from files!");
     Arc::try_unwrap(data).unwrap().into_inner().unwrap()
 }
 

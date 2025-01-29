@@ -44,6 +44,7 @@ services:
     volumes:
       - ./back/merged_data/:/usr/src/velovite-back/merged_data/
       - ./back/merged_data_mock/:/usr/src/velovite-back/merged_data_mock/
+    stop_grace_period: 2s
 
 volumes:
   postgres_data:

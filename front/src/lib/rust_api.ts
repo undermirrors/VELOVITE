@@ -3,8 +3,12 @@ import {date, markers} from "$lib/store";
 
 const url = 'http://localhost:8000/';
 
+/**
+ * Get the weather forecast for each station from the API at http://localhost:8000/weather_forecast
+ *
+ * @returns a map of the weather forecast for each station if found, null otherwise
+ */
 export async function getWeatherForecast(): Promise<Map<string, WeatherForecast> | null> {
-    console.log('Fetching weather forecast');
     try {
         const response = await fetch(url + 'weather_forecast');
         if (!response.ok) {
@@ -18,30 +22,59 @@ export async function getWeatherForecast(): Promise<Map<string, WeatherForecast>
     }
 }
 
+/**
+ * Get the markers from the search query from the API at http://localhost:8000/search/{search}
+ *
+ * @param search
+ * @returns a list of stations if found, null otherwise
+ */
 export async function getMarkersFromSearch(search: string): Promise<Station[]> {
     const response = await fetch(url + 'search/' + search);
     return await response.json();
 }
 
+/**
+ * Get the stations from the API at http://localhost:8000/stations
+ *
+ * @returns a list of stations if found, null otherwise
+ */
 export async function getStations(): Promise<Station[]> {
     const response = await fetch(url + 'stations');
     return await response.json();
 }
 
+/**
+ * Get the details for each station from the API at http://localhost:8000/detailed_stations
+ *
+ * @returns a map of the details for each station if found, null otherwise
+ */
 export async function getDetails(): Promise<Map<number, Details>> {
     const response = await fetch(url + 'detailed_stations');
     const entries: [number, Details][] = Object.entries(await response.json()).map(([key, value]) => [Number(key), value as Details]);
     return new Map<number, Details>(entries);
 }
 
+/**
+ * Get the details for a specific station from the API at http://localhost:8000/station/{id}
+ *
+ * @param id
+ * @returns the details for the station if found, null otherwise
+ */
 export async function getDetailsById(id: number): Promise<Details> {
     const response = await fetch(url + 'station/' + id)
     return await response.json();
 }
 
+/**
+ * Get the predictions for each station from the API at http://localhost:8000/predictions?date={date}
+ *
+ * @param date
+ * @returns a map of the predictions for each station if found, null otherwise
+ */
 export async function getAllPredictions(date: string): Promise<Map<number, Prediction> | null> {
+    console.log(date);
     date = date.replaceAll(':', '%3A');
-    date = date.replaceAll('Z', '');
+
     let response;
     try {
         response = await fetch(url + 'predictions?date=' + date);
@@ -57,8 +90,16 @@ export async function getAllPredictions(date: string): Promise<Map<number, Predi
     return new Map<number, Prediction>(entries);
 }
 
+/**
+ * Get the prediction for a specific station from the API at http://localhost:8000/predict?id={id}&date={date}
+ *
+ * @param id
+ * @param date
+ * @returns the prediction for the station if found, null otherwise
+ */
 export async function getPredict(id: number, date: string): Promise<Prediction | null> {
     date = date.replaceAll(':', '%3A');
+    // We don't need the Z at the end of the date
     date = date.replaceAll('Z', '');
 
     let response;
@@ -75,21 +116,28 @@ export async function getPredict(id: number, date: string): Promise<Prediction |
     return await response.json();
 }
 
+/**
+ * Get the ratio for each station with previous data
+ *
+ * @returns a map of the ratio for each station if found, null otherwise
+ */
 export async function setMarkerColor(): Promise<CustomMarkers[]> {
     let id: number = 0;
-    let date_id: string = '';
-    date.subscribe(value => date_id = value)();
-    let date_value = new Date(
-        new Date(date_id).setHours(
-            Number(date_id.split('T')[1].split(':')[0]) + 1, 0, 0, 0)
-    ).toISOString();
-    date_value = date_value.replaceAll(".000Z", "Z");
+    let date_value: Date = new Date(0, 1, 1); // to avoid confusion with the date type
+    date.subscribe(value => date_value = value)();
+
+    // to set the minutes and seconds to 0
+    date_value.setMinutes(0);
+    date_value.setSeconds(0);
+
+    // to format the date in the correct format
+    let dateStr = date_value.toLocaleString('sv-SE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(' ', 'T');
 
     let color: string = 'black';
     let markersList: CustomMarkers[] = [];
     markers.subscribe(value => markersList = value)();
 
-    const predictions = await getAllPredictions(date_value);
+    const predictions = await getAllPredictions(dateStr);
     const details = await getDetails();
     if (predictions === null) {
         for (const marker of markersList) {
@@ -99,7 +147,7 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     }
 
     for (const marker of markersList) {
-        if (date_value >= new Date().toISOString()) {
+        if (date_value >= new Date()) {
             id = marker.getId();
             const val = await getRatio(id, predictions, details);
             if (val === -1) {
@@ -118,6 +166,14 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     return markersList;
 }
 
+/**
+ * Get the ratio for a specific station with previous data
+ *
+ * @param id
+ * @param predictions
+ * @param details
+ * @returns the ratio between 0 and 1 for the station if found, -1 otherwise
+ */
 async function getRatio(id: number, predictions: Map<number, Prediction>, details: Map<number, Details>): Promise<number> {
     const data = predictions.get(id);
     if (data === undefined) {

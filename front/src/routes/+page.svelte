@@ -4,65 +4,104 @@
     import {getWeatherForecast} from '$lib/rust_api';
     import {date, research} from '$lib/store';
 
-    let mapKey = 0; // Force re-rendering of the map
-    async function updateDate(selectedDate: string) {
+    // Force re-rendering of the map and the weather icon
+    let mapKey = 0;
+    let weatherKey = 0;
+
+    /**
+     * Update date and time selected by user,
+     * and reload the map in order to update the color of the markers
+     *
+     * @param selectedDate
+     */
+    async function updateDate(selectedDate: Date) {
         date.set(selectedDate);
         mapKey++;
     }
 
-    function updateJour(selectedJour: string) {
-        let hours: string = '';
-        date.subscribe(value => hours = value.split('T')[1].split(':')[0])();
-        let res = selectedJour + 'T' + hours + ':00:00.000Z';
-        date.set(res);
+    /**
+     * Update the date of the selected day only, and keep the time,
+     * and reload the map in order to update the color of the markers
+     *
+     * @param selectedJour : date chose by the user
+     */
+    function updateJour(selectedJour: Date) {
+        // get the previous selected date
+        let newDate: Date = new Date(selectedJour);
+        date.subscribe(value => newDate = value)();
+
+        // modify the year, month and day of the new date
+        newDate.setFullYear(selectedJour.getFullYear(), selectedJour.getMonth(), selectedJour.getDate());
+        date.set(newDate);
+
+        // reload the map
         mapKey++;
     }
 
-    function updateHour(selectedHour: string) {
-        let hours = selectedHour.split(':')[0];
-        let selectedJour: string = '';
-        date.subscribe(value => selectedJour = value.split('T')[0])();
-        let res = selectedJour + 'T' + hours + ':00:00.000Z';
-        date.set(res);
+    /**
+     * Update the hour of the selected day only, and keep the date,
+     * and reload the map in order to update the color of the markers
+     *
+     * @param selectedHour : hour chose by the user
+     */
+    function updateHour(selectedHour: number) {
+        // get the previous selected date
+        let newDate: Date = new Date(selectedHour);
+        date.subscribe(value => newDate = value)();
+
+        // modify the hour of the new date
+        newDate.setHours(selectedHour);
+        date.set(newDate);
+
+        // reload the map
         mapKey++;
     }
 
+    /**
+     * Update the research entered by the user,
+     * and reload the map in order to update number of markers
+     *
+     * @param value : address or name of the station entered by the user
+     */
     function updateEntries(value: string) {
         research.set(value);
         mapKey++;
     }
 
     function getJour() {
-        let dateJour = '';
+        let dateJour: Date = new Date(0, 1, 1); // 01/01/0000 to avoid confusion in the code if the date is not set
         date.subscribe(value => dateJour = value)();
-        return dateJour.split('T')[0];
+
+        return dateJour;
     }
 
-    updateDate(new Date().toISOString());
+    updateDate(new Date(new Date().getTime())); // in order to predict directly Velo'V availability
     let dateJour = getJour();
 
-    // Obtenir l'heure actuelle au format HH:MM
-    const now = new Date();
-    const currentHour = now.getHours().toString().padStart(2, '0'); // Ajouter un 0 si nécessaire
-    const currentMinutes = now.getMinutes().toString().padStart(2, '0');
-    const currentTime = `${currentHour}:${currentMinutes}`;
+    // Get the current time in the format HH:MM
+    // We use the ISO format to get the time in the same format as the API
+    let hoursAndMinutes = `${dateJour.toISOString().split('T')[1].split(':')[0]}:${dateJour.toISOString().split(':')[1].split('.')[0]}`;
+    console.log(hoursAndMinutes);
 
-    let heure = currentTime;
-    let hoursAndMinutes = currentTime;
-    let timeZ = dateJour + 'T' + heure.split(':')[0] + ':00:00Z';
+    // Initialize the variables used for weather icon and temperature
     let temp = '';
     let meteo = -1;
-
     let src_img = '';
 
+    // onMount is a lifecycle function that is called when the component is mounted to the DOM
     onMount(async () => {
         let global_meteo = await getWeatherForecast();
         if (global_meteo === null) {
             temp = '?';
             meteo = -1;
         } else {
-            temp = String(global_meteo.get(timeZ)?.temperature_2m);
-            meteo = Number(global_meteo.get(timeZ)?.weather_code);
+            let date = getJour();
+            // to format the date in the same way as the API, but add Z at the end
+            let dateStr = date.toLocaleString('sv-SE', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }).replace(' ', 'T');
+            dateStr = dateStr + 'Z';
+
+            temp = String(global_meteo.get(dateStr)?.temperature_2m);
+            meteo = Number(global_meteo.get(dateStr)?.weather_code);
         }
 
         let soleil = new Set([0, 1]);
@@ -73,8 +112,6 @@
         let brouillard = new Set([45, 48]);
         let neige = new Set([71, 73, 75, 77, 85, 86]);
         let orage = new Set([95, 96, 99]);
-
-        console.log(nuage.has(meteo));
 
         if (soleil.has(meteo)) {
             src_img = '/meteo/soleil.png';
@@ -105,7 +142,7 @@
 <div>
     <input
             class="overlay overlay-date"
-            bind:value={dateJour}
+            value={`${dateJour.toISOString().split('T')[0]}`}
             type="date"
             id="date"
             name="date"
@@ -114,28 +151,24 @@
             max={new Date(new Date().getTime() + 6 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}
             on:change={(e: Event) => {
                 if (e.target instanceof HTMLInputElement) {
-                    let minDate = new Date().toISOString();
-                    let maxDate = new Date(new Date().getTime() + 6 * 24 * 60 * 60 * 1000).toISOString();
+                    console.log(e.target.value);
+                    let minDate = new Date();
+                    let maxDate = new Date(new Date().getTime() + 6 * 24 * 60 * 60 * 1000);
+
                     if (e.target.value === '') {
-                        dateJour = minDate.split('T')[0];
-                        updateDate(minDate);
+                        dateJour = minDate;
+                        updateJour(minDate);
                         return
                     }
-                    if (dateJour < minDate.split('T')[0]) {
-                        dateJour = minDate.split('T')[0];
-                    } else if (dateJour > maxDate.split('T')[0]) {
-                        dateJour = maxDate.split('T')[0];
-                    }
-
-                    let dateToCheck = new Date(e.target.value).toISOString();
-                    if (dateToCheck < minDate.split('T')[0]) {
-                        dateJour = minDate.split('T')[0];
-                        updateDate(minDate);
-                    } else if (dateToCheck > maxDate.split('T')[0]) {
-                        dateJour = maxDate.split('T')[0];
-                        updateDate(maxDate);
+                    if (new Date(e.target.value) < minDate) {
+                        dateJour = minDate;
+                        updateJour(minDate);
+                    } else if (new Date(e.target.value) > maxDate) {
+                        dateJour = maxDate;
+                        updateJour(maxDate);
                     } else {
-                        updateDate(dateToCheck);
+                        dateJour = new Date(e.target.value);
+                        updateJour(dateJour);
                     }
                 }
             }}
@@ -146,13 +179,14 @@
             type="time"
             id="heure"
             name="heure"
-            bind:value={hoursAndMinutes}
-            min={new Date().toISOString().split('T')[1].split(':')[0] + ':' + new Date().toISOString().split('T')[1].split(':')[1]}
+            value={hoursAndMinutes}
+            min={new Date().getHours() + ':' + new Date().getMinutes()}
             max="23:59"
             placeholder="Adresse"
             on:change={e => {
                 if (e.target instanceof HTMLInputElement) {
-                    updateHour(e.target.value);
+                    hoursAndMinutes = e.target.value;
+                    updateHour(Number(hoursAndMinutes.split(':')[0]));
                 }
             }}
     />

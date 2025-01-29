@@ -1,5 +1,5 @@
 use crate::models::{BasicStation, DetailedStation};
-use axum::Json;
+use axum::{extract::Path, response::IntoResponse, Json};
 use lazy_static::lazy_static;
 
 lazy_static! {
@@ -97,4 +97,14 @@ pub fn get_detailed_stations_mock() -> Json<&'static [DetailedStation; 2]> {
 /// A `Json` response containing a reference to a static array of `BasicStation` objects.
 pub fn get_stations_mock() -> Json<&'static [BasicStation; 2]> {
     Json(&*STATIONS_MOCK)
+}
+
+pub async fn get_detailed_station_mock(Path(id): Path<i32>) -> impl IntoResponse {
+    let detailed_station = DETAILED_STATIONS_MOCK
+        .iter()
+        .find(|station| station.id == id);
+    match detailed_station {
+        Some(station) => (axum::http::StatusCode::OK, Json(station)).into_response(),
+        None => axum::http::StatusCode::NOT_FOUND.into_response(),
+    }
 }

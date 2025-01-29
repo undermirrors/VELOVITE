@@ -18,6 +18,7 @@ use indoc::indoc;
 use learning::{
     filter_velov_data, merge_data, read_merged_data_from_file, MergedData, SchoolHolidays,
 };
+use mock::get_detailed_station_mock;
 use tokio::signal;
 use tower_http::cors::CorsLayer;
 use tracing::info;
@@ -121,7 +122,6 @@ async fn main() {
             }),
         )
         .route("/weather_forecast", get(get_weather_forecast))
-        .route("/station/:id", get(get_detailed_station))
         .route("/search/:name", get(search_station))
         .route("/predict", get(predict))
         .route("/predictions", get(predictions))
@@ -199,6 +199,7 @@ fn mock_router() -> Router {
     Router::new()
         .route("/detailed_stations", get(get_detailed_stations_mock()))
         .route("/stations", get(get_stations_mock()))
+        .route("/station/:id", get(get_detailed_station_mock))
         .layer(CorsLayer::permissive())
 }
 
@@ -215,6 +216,7 @@ fn normal_router(app_state: AppState) -> Router {
     Router::new()
         .route("/detailed_stations", get(get_detailed_stations))
         .route("/stations", get(get_stations))
+        .route("/station/:id", get(get_detailed_station))
         .with_state(app_state)
         .layer(CorsLayer::permissive())
 }

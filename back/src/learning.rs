@@ -2,8 +2,6 @@ use crate::downloader::{Value, WeatherData};
 use crate::utils::distance;
 use chrono::{DateTime, Datelike, NaiveDate, Timelike, Utc};
 use log::info;
-use rand::rng;
-use rand::seq::SliceRandom;
 use rayon::iter::{IntoParallelRefIterator, ParallelIterator};
 use rayon::prelude::ParallelBridge;
 use serde::{Deserialize, Serialize};
@@ -26,7 +24,6 @@ pub fn benchmark() {
 
     let mut len_removed = 0;
     for (key, value) in data.iter_mut() {
-        value.shuffle(&mut rng());
         let len = value.len();
         let to_remove = (len as f32 * BENCHMARK_PERCENTAGE / 100.0) as usize;
         removed_data.insert(*key, value.split_off(len - to_remove));

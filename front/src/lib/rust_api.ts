@@ -23,9 +23,10 @@ export async function getTables(): Promise<Table[]> {
     return await response.json();
 }
 
-export async function getDetails(): Promise<Details[]> {
+export async function getDetails(): Promise<Map<number,Details>> {
     const response = await fetch(url + 'detailed_stations');
-    return await response.json();
+    const entries: [number, Details][] = Object.entries(await response.json()).map(([key, value]) => [Number(key), value as Details]);
+    return new Map<number, Details>(entries);
 }
 
 export async function getDetailsById(id: number): Promise<Details> {
@@ -112,12 +113,12 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     return markersList;
 }
 
-async function getRatio(id: number, predictions: Map<number, Prediction>, details: Details[]): Promise<number> {
+async function getRatio(id: number, predictions: Map<number, Prediction>, details: Map<number, Details>): Promise<number> {
     const data = predictions.get(id);
     if (data === undefined) {
         return -1;
     }
-    const data2 = details.find((element) => element.id === id);
+    const data2 = details.get(id);
     if (data2 === undefined) {
         return -1;
     }

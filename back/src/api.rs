@@ -52,7 +52,16 @@ pub async fn get_detailed_stations(State(state): State<AppState>) -> impl IntoRe
         .select(DetailedStation::as_select())
         .load(&mut *connection)
     {
-        Ok(stations) => (StatusCode::OK, Json(stations)).into_response(),
+        Ok(stations) => (
+            StatusCode::OK,
+            Json(
+                stations
+                    .into_iter()
+                    .map(|v| (v.id, v))
+                    .collect::<HashMap<_, _>>(),
+            ),
+        )
+            .into_response(),
         Err(_) => (
             StatusCode::INTERNAL_SERVER_ERROR,
             "Error querying database".to_owned(),

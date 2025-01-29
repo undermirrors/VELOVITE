@@ -29,41 +29,39 @@ class CustomIcon extends L.Icon {
 export class CustomMarkers {
     id: number;
     marker: L.Marker;
+    station_name : string = "";
+    prediction_empty_slots : string = "";
+    prediction_available_bike : string = "";
 
     constructor(id: number, latitude: number, longitude: number) {
+        let station_capacity : string ="";
         this.id = id;
         this.marker = L.marker([latitude, longitude], {icon: new CustomIcon()}).addEventListener('click', async () => {
-            // We get the details for the selected station
-            const advanced_data = await getDetailsById(this.id);
+            //get station name
+            await this.refreshStationName();
+           
+            //get predictions
+            await this.refreshPrediction();
 
-            // We get the selected date from the store
-            let selected_date: string = '';
-            date.subscribe(value => selected_date = value)();
+            //display popup on click of markers
+            this.marker.bindPopup("<h3>"+this.station_name+"</h3><p>Velo'v disponibles : "+this.prediction_available_bike+"</p> <p>Bornes disponibles : "+this.prediction_empty_slots+"</p>");
 
-            console.log('Marker clicked');
-            console.log(advanced_data);
-            console.log('value :' + selected_date);
-            if (selected_date >= new Date().toISOString()) {
-                // We do some date manipulation to get the next hour with minutes and seconds set to 0
-                let date_id = new Date(
-                    new Date(selected_date).setHours(
-                        Number(selected_date.split('T')[1].split(':')[0]) + 1, 0, 0, 0)
-                ).toISOString();
-                console.log(date_id)
-                date_id = date_id.replaceAll(".000Z", "Z");
-
-                // We get the prediction for the selected date
-                const predicted_data = await getPredict(this.id, date_id);
-
-                console.log(date_id)
-                console.log(predicted_data);
-
-            } else {
-                console.log('Date is in the past');
-            }
         });
-        this.marker.bindPopup("<h3>Nom de la station</h3><p>10%</p>");
-        this.marker.bindTooltip("station");
+
+        //display tooltip on hover of markers
+        this.marker.addEventListener('hover', async ()=>{
+            if(this.station_name==""){
+                const station_data = await this.refreshStationName();
+            }
+
+            this.marker.bindTooltip(this.station_name);
+
+        });
+      
+     
+       
+        
+        
     }
 
 
@@ -78,4 +76,53 @@ export class CustomMarkers {
     getId() {
         return this.id;
     }
+
+    async refreshStationName(){
+        // We get the details for the selected station
+        const station_data = await getDetailsById(this.id);
+
+        if(station_data.name !=""){
+            this.station_name=station_data.name
+        }else{
+            this.station_name = "no available data"
+        }
+    }
+
+    async refreshPrediction(){
+        // We get the selected date from the store
+        let selected_date: string = '';
+        date.subscribe(value => selected_date = value)();
+
+        console.log('value :' + selected_date);
+        if (selected_date >= new Date().toISOString()) {
+            // We do some date manipulation to get the next hour with minutes and seconds set to 0
+            let date_id = new Date(
+                new Date(selected_date).setHours(
+                    Number(selected_date.split('T')[1].split(':')[0]) + 1, 0, 0, 0)
+            ).toISOString();
+            console.log(date_id)
+            date_id = date_id.replaceAll(".000Z", "Z");
+
+            // We get the prediction for the selected date
+            let predicted_data = await getPredict(this.id, date_id);
+
+            if(predicted_data==null){
+                this.prediction_available_bike='indisponible';
+                this.prediction_empty_slots='insdisponible';
+            }else{
+                this.prediction_available_bike=String(predicted_data?.available_bikes);
+                this.prediction_empty_slots=String(predicted_data?.free_stands);    
+            }
+
+            console.log(date_id)
+            console.log(predicted_data);
+
+        } else {
+            console.log('Date is in the past');
+
+            this.prediction_available_bike='indisponible';
+            this.prediction_empty_slots='insdisponible';
+        }
+    }
+
 }

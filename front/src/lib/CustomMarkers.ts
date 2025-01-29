@@ -35,7 +35,13 @@ export class CustomMarkers {
 
     constructor(id: number, latitude: number, longitude: number) {
         this.id = id;
-        this.marker = L.marker([latitude, longitude], {icon: new CustomIcon()}).addEventListener('click', async () => {
+
+        this.marker = L.marker([latitude, longitude], {icon: new CustomIcon()});
+        this.marker.bindPopup(""); // Bind an empty popup initially
+
+        this.marker.addEventListener('click', async () => {
+            console.log("yooooooo");
+            
             //get station name
             await this.refreshStationName();
 
@@ -43,9 +49,11 @@ export class CustomMarkers {
             await this.refreshPrediction();
 
             //display popup on click of markers
-            this.marker.bindPopup("<h3>" + this.station_name + "</h3><p>Velo'v disponibles : " + this.prediction_available_bike + "</p> <p>Bornes disponibles : " + this.prediction_empty_slots + "</p>");
-
+            this.marker.setPopupContent("<h3>" + this.station_name + "</h3><p>Velo'v disponibles : " + this.prediction_available_bike + "</p> <p>Bornes disponibles : " + this.prediction_empty_slots + "</p>");
+            this.marker.openPopup();
         });
+
+
 
         //display tooltip on hover of markers
         this.marker.addEventListener('mouseover', async () => {

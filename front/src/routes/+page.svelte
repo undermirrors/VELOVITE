@@ -48,6 +48,8 @@
     let temp = '';
     let meteo = -1;
 
+    let src_img;
+
     onMount(async () => {
         let global_meteo = await getWeatherForecast();
         if (global_meteo === null) {
@@ -58,16 +60,7 @@
             meteo = Number(global_meteo.get(timeZ)?.weather_code);
         }
 
-        console.log(meteo);
-        console.log(global_meteo);
-    });
-    console.log(meteo);
-
-    // Visuel météo
-
-    let src_img;
-
-    let soleil = new Set([0, 1]);
+        let soleil = new Set([0, 1]);
     let soleil_nuage = new Set([2]);
     let nuage = new Set([3]);
     let pluie = new Set([51, 53, 55, 61, 63, 65, 80, 81, 82]);
@@ -97,6 +90,13 @@
     } else {
         src_img = '/meteo/Interdit.png';
     }
+    });
+    console.log(meteo);
+
+    // Visuel météo
+
+    
+    
 
     //paramètres température
 </script>

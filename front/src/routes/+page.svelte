@@ -67,6 +67,26 @@
 	}
 
 	/**
+	 * Update the hour and minutes of the selected day only, and keep the date,
+	 * and reload the map in order to update the color of the markers
+	 *
+	 * @param selectedTime : time chose by the user in HH:MM format
+	 */
+	async function updateTime(selectedTime: string) {
+		// get the previous selected date
+		let newDate: Date = new Date();
+		date.subscribe((value) => (newDate = value))();
+
+		// modify the hour and minutes of the new date
+		const [hours, minutes] = selectedTime.split(':').map(Number);
+		newDate.setHours(hours, minutes);
+		date.set(newDate);
+
+		// reload the map
+		await updateMapMarkers();
+	}
+
+	/**
 	 * Update the research entered by the user,
 	 * and reload the map in order to update number of markers
 	 *
@@ -97,7 +117,10 @@
 	let hoursAndMinutes = `${dateJour.toISOString().split('T')[1].split(':')[0]}:${dateJour.toISOString().split(':')[1].split('.')[0]}`;
 
 	// Get the current time in the format HH:MM in local time
-	let localHoursAndMinutes = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+	let localHoursAndMinutes = new Date().toLocaleTimeString([], {
+		hour: '2-digit',
+		minute: '2-digit'
+	});
 
 	// Initialize the variables used for weather icon and temperature
 	let temp = '';
@@ -273,7 +296,7 @@
 		on:change={(e) => {
 			if (e.target instanceof HTMLInputElement) {
 				hoursAndMinutes = e.target.value;
-				updateHour(Number(hoursAndMinutes.split(':')[0]));
+				updateTime(hoursAndMinutes);
 				updateWeather();
 			}
 		}}

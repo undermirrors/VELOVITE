@@ -281,7 +281,7 @@
 		type="text"
 		id="adress"
 		name="adress"
-		placeholder="Adresse"
+		placeholder="Rechercher..."
 		on:change={(e) => {
 			if (e.target instanceof HTMLInputElement) {
 				updateEntries(e.target.value);

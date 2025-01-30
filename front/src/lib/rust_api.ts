@@ -126,7 +126,7 @@ export async function setMarkerColor(): Promise<CustomMarkers[]> {
     date.subscribe(value => date_value = value)();
 
     // to set the minutes and seconds to 0
-    date_value.setMinutes(0);
+    // date_value.setMinutes(0);
     date_value.setSeconds(0);
 
     // to format the date in the correct format

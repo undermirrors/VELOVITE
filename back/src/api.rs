@@ -202,7 +202,7 @@ pub async fn predictions(
 
     let forecast = download_weather_forecast().await.unwrap();
     let now = chrono::Utc::now().naive_utc();
-    let weather_data = match forecast.get(&params.date.and_utc()) {
+    let weather_data = match forecast.get(&params.date.with_minute(0).unwrap().and_utc()) {
         Some(data) => data,
         None => {
             return (StatusCode::NOT_FOUND, "Weather data not found".to_owned()).into_response();
@@ -315,7 +315,7 @@ pub async fn predict(
         }
     }
 
-    let weather_data = match forecast.get(&params.date.and_utc()) {
+    let weather_data = match forecast.get(&params.date.with_minute(0).unwrap().and_utc()) {
         Some(data) => data,
         None => {
             return (StatusCode::NOT_FOUND, "Weather data not found".to_owned()).into_response();

@@ -53,13 +53,14 @@
 	 *
 	 * @param selectedHour : hour chose by the user
 	 */
-	async function updateHour(selectedHour: number) {
+	async function updateHour(selectedHour: number, selectedMinute: number) {
 		// get the previous selected date
 		let newDate: Date = new Date(selectedHour);
 		date.subscribe((value) => (newDate = value))();
 
 		// modify the hour of the new date
 		newDate.setHours(selectedHour);
+		newDate.setMinutes(selectedMinute);
 		date.set(newDate);
 
 		// reload the map
@@ -270,7 +271,7 @@
 		on:change={(e) => {
 			if (e.target instanceof HTMLInputElement) {
 				hoursAndMinutes = e.target.value;
-				updateHour(Number(hoursAndMinutes.split(':')[0]));
+				updateHour(Number(hoursAndMinutes.split(':')[0]), Number(hoursAndMinutes.split(':')[1]));
 				updateWeather();
 			}
 		}}

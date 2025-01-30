@@ -129,8 +129,6 @@ export class CustomMarkers {
         basicDate.setHours(0, 0, 0, 0);
         if (selected_date >= basicDate) {
             // We do some date manipulation to get the next hour with minutes and seconds set to 0
-            selected_date.setHours(selected_date.getHours() + 1);
-            selected_date.setMinutes(0);
             selected_date.setSeconds(0);
 
             const dateStr = selected_date.toLocaleString('sv-SE', {

@@ -53,14 +53,13 @@
 	 *
 	 * @param selectedHour : hour chose by the user
 	 */
-	async function updateHour(selectedHour: number, selectedMinute: number) {
+	async function updateHour(selectedHour: number) {
 		// get the previous selected date
 		let newDate: Date = new Date(selectedHour);
 		date.subscribe((value) => (newDate = value))();
 
 		// modify the hour of the new date
 		newDate.setHours(selectedHour);
-		newDate.setMinutes(selectedMinute);
 		date.set(newDate);
 
 		// reload the map
@@ -96,6 +95,9 @@
 	// Get the current time in the format HH:MM
 	// We use the ISO format to get the time in the same format as the API
 	let hoursAndMinutes = `${dateJour.toISOString().split('T')[1].split(':')[0]}:${dateJour.toISOString().split(':')[1].split('.')[0]}`;
+
+	// Get the current time in the format HH:MM in local time
+	let localHoursAndMinutes = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 
 	// Initialize the variables used for weather icon and temperature
 	let temp = '';
@@ -264,14 +266,14 @@
 		type="time"
 		id="heure"
 		name="heure"
-		value={hoursAndMinutes}
-		min={new Date().getHours() + ':' + new Date().getMinutes()}
+		value={localHoursAndMinutes}
+		min={new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
 		max="23:59"
 		placeholder="Adresse"
 		on:change={(e) => {
 			if (e.target instanceof HTMLInputElement) {
 				hoursAndMinutes = e.target.value;
-				updateHour(Number(hoursAndMinutes.split(':')[0]), Number(hoursAndMinutes.split(':')[1]));
+				updateHour(Number(hoursAndMinutes.split(':')[0]));
 				updateWeather();
 			}
 		}}

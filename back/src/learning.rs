@@ -14,7 +14,7 @@ use std::fs::File;
 use std::io::{BufReader, BufWriter};
 use std::sync::{Arc, Mutex};
 
-const BENCHMARK_PERCENTAGE: f32 = 20.0;
+const BENCHMARK_PERCENTAGE: f32 = 2.0;
 
 pub fn benchmark() {
     let mut connection = establish_connection();
@@ -55,6 +55,7 @@ pub fn benchmark() {
                     let wanted_point = MergedData {
                         id: wanted.id,
                         hour: wanted.hour,
+                        minute: wanted.minute,
                         day: wanted.day,
                         month: wanted.month,
                         week_day: wanted.week_day,
@@ -255,6 +256,7 @@ pub fn merge_data() {
             MergedData {
                 id: velov_data.id,
                 hour: date.time().hour(),
+                minute: date.time().minute(),
                 day: date.date_naive().day(),
                 month: date.date_naive().month(),
                 week_day: date.date_naive().weekday().number_from_monday(),
@@ -526,6 +528,7 @@ struct UsefulData {
 pub struct MergedData {
     pub id: u32,
     pub hour: u32,
+    pub minute: u32,
     pub day: u32,
     pub month: u32,
     pub week_day: u32,

@@ -35,7 +35,10 @@ const WEEK_DAY_COEF: f32 = 1.0;
 const HOLIDAYS_COEF: f32 = 1.0;
 
 pub fn distance(a: &MergedData, b: &MergedData) -> f32 {
-    ((HOUR_COEF * ((a.hour - b.hour) as f32 / 24.0).powf(2.0))
+    let a_time = (a.hour * 60 + a.minute) as f32 / 1440.0;
+    let b_time = (b.hour * 60 + b.minute) as f32 / 1440.0;
+
+    ((HOUR_COEF * (a_time - b_time).powf(2.0))
         + (DAY_COEF * ((a.day - b.day) as f32 / 7.0).powf(2.0))
         + (TEMPERATURE_COEF * ((a.temperature - b.temperature) / 40.0).powf(2.0))
         + (PRECIPITATION_COEF * ((a.precipitation - b.precipitation) / 100.0).powf(2.0))

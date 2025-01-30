@@ -227,6 +227,7 @@ pub async fn predictions(
                 let wanted_point = MergedData {
                     id: station_data.first().unwrap().id,
                     hour: params.date.time().hour(),
+                    minute: params.date.time().minute(),
                     day: params.date.day(),
                     month: params.date.month(),
                     week_day: params.date.weekday().num_days_from_monday(),
@@ -327,6 +328,7 @@ pub async fn predict(
     let mut wanted_point = MergedData {
         id: params.id,
         hour: params.date.time().hour(),
+        minute: params.date.time().minute(),
         day: params.date.day(),
         month: params.date.month(),
         week_day: params.date.weekday().num_days_from_monday(),

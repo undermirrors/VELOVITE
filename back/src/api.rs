@@ -216,11 +216,20 @@ pub async fn predictions(
         .data
         .par_iter()
         .map(|(_, station_data)| {
-            if params.date < now {
+            if params.date
+                < now
+                    .with_hour(0)
+                    .unwrap()
+                    .with_minute(0)
+                    .unwrap()
+                    .with_second(0)
+                    .unwrap()
+            {
                 station_data.par_iter().find_first(|d| {
                     d.month == params.date.month()
                         && d.day == params.date.day()
                         && d.hour == params.date.hour()
+                        && d.minute == params.date.minute()
                         && d.week_day == params.date.weekday().num_days_from_monday()
                 })
             } else {
@@ -298,11 +307,19 @@ pub async fn predict(
         .any(|holiday| params.date.date() >= holiday.start && params.date.date() <= holiday.end);
 
     let forecast = download_weather_forecast().await.unwrap();
-    let now = NaiveDate::from_ymd_opt(2025, 1, 29).unwrap().and_hms_opt(0, 0, 0).unwrap();
+    let now = chrono::Utc::now()
+        .naive_utc()
+        .with_hour(0)
+        .unwrap()
+        .with_minute(0)
+        .unwrap()
+        .with_second(0)
+        .unwrap();
     if params.date < now {
         match station_data.par_iter().find_first(|d| {
             d.month == params.date.month()
                 && d.day == params.date.day()
+                && d.minute == params.date.minute()
                 && d.hour == params.date.hour()
                 && d.week_day == params.date.weekday().num_days_from_monday()
         }) {
